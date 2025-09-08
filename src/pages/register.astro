@@ -1,0 +1,60 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MealForm from '../components/MealForm.astro';
+---
+
+<Layout title="Registro de Comida">
+    <main class="register-container">
+        <MealForm />
+    </main>
+</Layout>
+
+<style>
+    body {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .register-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 4.5rem); 
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 640px) {
+        .register-container {
+            justify-content: flex-start;
+            padding-top: 2rem;
+        }
+    }
+</style>
+
+<script>
+    // Se corrige la ruta de importación para que sea relativa.
+    import { auth, db } from '../firebase/config';
+    import { onAuthStateChanged } from 'firebase/auth';
+    import { doc, getDoc } from "firebase/firestore";
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            document.body.style.opacity = '1';
+            console.log("Acceso permitido para el usuario:", user.uid);
+
+            const userDocRef = doc(db, "usuarios", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                console.log("Documento de usuario encontrado:", userDocSnap.data());
+            } else {
+                console.log("No se encontró un documento para este usuario.");
+            }
+        } else {
+            console.log("Usuario no autenticado, redirigiendo a inicio...");
+            window.location.href = '/';
+        }
+    });
+</script>

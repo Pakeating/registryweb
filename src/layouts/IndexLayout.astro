@@ -1,0 +1,75 @@
+---
+// src/layouts/IndexLayout.astro
+---
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Iniciar Sesión</title>
+    <style is:global>
+        @import '../styles/global.css';
+    </style>
+</head>
+<body>
+    <main class="login-page">
+        <div class="login-card">
+            <div class="card-header">
+                <h1 class="title">Bienvenido a tu App de Registro de Comidas</h1>
+                <p class="subtitle">Inicia sesión para continuar</p>
+            </div>
+            <slot />
+        </div>
+    </main>
+</body>
+</html>
+
+<style>
+    :root {
+        --primary-color: #F5F5F4;
+        --secondary-color: #FFFFFF;
+        --accent-color: #3B82F6;
+        --text-primary-color: #1C1917;
+        --text-secondary-color: #44403C;
+        --border-color: #D6D3D1;
+    }
+
+    .login-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: var(--primary-color);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    }
+
+    .login-card {
+        background-color: var(--secondary-color);
+        padding: 2.5rem 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        max-width: 24rem;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .card-header {
+        margin-bottom: 2rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary-color);
+        margin: 0 0 0.5rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+        color: var(--text-secondary-color);
+        margin: 0;
+    }
+
+</style>

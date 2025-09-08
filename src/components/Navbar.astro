@@ -1,0 +1,64 @@
+---
+// src/components/Navbar.astro
+---
+<header class="navbar">
+    <div class="navbar-container">
+        <div class="brand">
+            <a href="/">MealApp</a>
+        </div>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Inicio</a>
+            <a href="/register" class="nav-link">Registrar Comida</a>
+            <a href="/stats" class="nav-link">Estadísticas</a>
+        </nav>
+    </div>
+</header>
+
+<style>
+    :root {
+        --primary-color: #F5F5F4; /* stone-100 */
+        --secondary-color: #FFFFFF; /* white */
+        --text-primary-color: #1C1917; /* stone-900 */
+        --text-secondary-color: #44403C; /* stone-700 */
+        --border-color: #D6D3D1; /* stone-300 */
+    }
+
+    .navbar {
+        background-color: var(--secondary-color);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+        padding: 1rem 2rem;
+    }
+
+    .navbar-container {
+        max-width: 72rem; /* max-w-7xl */
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .brand a {
+        font-size: 1.5rem; /* text-2xl */
+        font-weight: 700;
+        color: var(--text-primary-color);
+        text-decoration: none;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 2rem; /* gap-8 */
+    }
+
+    .nav-link {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-secondary-color);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+        color: var(--text-primary-color);
+    }
+</style>
