@@ -6,7 +6,13 @@
         <div class="brand">
             <a href="/">MealApp</a>
         </div>
-        <nav class="nav-links">
+        
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-controls="nav-links" aria-expanded="false">
+            <svg class="hamburger-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <nav class="nav-links" id="nav-links">
             <a href="/" class="nav-link">Inicio</a>
             <a href="/register" class="nav-link">Registrar Comida</a>
             <a href="/stats" class="nav-link">Estadísticas</a>
@@ -28,6 +34,7 @@
         border-bottom: 1px solid var(--border-color);
         box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
         padding: 1rem 2rem;
+        position: relative; /* Context for the mobile menu */
     }
 
     .navbar-container {
@@ -61,4 +68,69 @@
     .nav-link:hover {
         color: var(--text-primary-color);
     }
+
+    .menu-toggle {
+        display: none; /* Hidden on desktop */
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        z-index: 1000;
+        color: var(--text-primary-color);
+    }
+    
+    .menu-toggle .close-icon {
+        display: none;
+    }
+
+    .menu-toggle.is-open .hamburger-icon {
+        display: none;
+    }
+    
+    .menu-toggle.is-open .close-icon {
+        display: block;
+    }
+
+    /* --- Responsive Styles --- */
+    @media (max-width: 768px) {
+        .menu-toggle {
+            display: block; /* Show hamburger button */
+        }
+
+        .nav-links {
+            display: none; /* Hide nav links by default on mobile */
+            position: absolute;
+            top: 100%; /* Position right below the navbar */
+            left: 0;
+            right: 0;
+            background-color: var(--secondary-color);
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+        }
+
+        .nav-links.is-open {
+            display: flex; /* Show menu when active */
+        }
+    }
 </style>
+
+<script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+
+    if (menuToggle && navLinks) {
+        menuToggle.addEventListener('click', () => {
+            // Toggle the 'is-open' class on both the button and the nav links
+            const isOpen = menuToggle.classList.toggle('is-open');
+            navLinks.classList.toggle('is-open');
+            
+            // Update aria-expanded for accessibility
+            menuToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+    }
+</script>
