@@ -1,3 +1,6 @@
+---
+import LoadingButton from './LoadingButton.astro';
+---
 <div class="meal-form">
   <h2 class="title">Registrar Comida</h2>
   <form id="meal-form-element">
@@ -23,9 +26,9 @@
     </div>
 
     <div class="form-actions">
-      <button class="button" type="submit">
-        Enviar
-      </button>
+        <LoadingButton id="submit-button" type="submit">
+            Enviar
+        </LoadingButton>
     </div>
   </form>
 </div>
@@ -118,37 +121,16 @@
     display: flex;
     margin-top: 2rem;
   }
-
-  .button {
-    background-color: var(--accent-color);
-    color: white;
-    font-weight: 700;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.375rem;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    width: 100%;
-    font-size: 1rem;
-  }
-
-  .button:hover {
-    background-color: #2563EB;
-  }
+  
+  /* Los estilos del botón y el spinner se han movido a LoadingButton.astro */
 
   @media (min-width: 640px) {
     .meal-form {
       max-width: 42rem;
       padding: 2.5rem;
     }
-
-    .title {
-      font-size: 1.875rem;
-    }
-
-    .label {
-        font-size: 1rem;
-    }
+    .title { font-size: 1.875rem; }
+    .label { font-size: 1rem; }
   }
 
 </style>
@@ -160,24 +142,46 @@
 
     let currentUser = null;
 
+    function resetForm() {
+        const mealNameInput = document.getElementById('meal-name') as HTMLInputElement;
+        const dateTimeInput = document.getElementById('meal-time') as HTMLInputElement;
+        const mealTypeSelect = document.getElementById('meal-type') as HTMLSelectElement;
+
+        if (mealNameInput && dateTimeInput && mealTypeSelect) {
+            mealNameInput.value = '';
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
+            dateTimeInput.value = localISOTime;
+            mealTypeSelect.value = 'Comida planificada';
+        }
+    }
+
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        const dateTimeInput = document.getElementById('meal-time');
-        if (dateTimeInput) {
-            const now = new Date();
-            const timezoneOffset = now.getTimezoneOffset() * 60000;
-            const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
-            (dateTimeInput as HTMLInputElement).value = localISOTime;
-        }
+        resetForm();
 
         const form = document.getElementById('meal-form-element');
+        const submitButton = document.getElementById('submit-button') as HTMLButtonElement;
+        const buttonText = submitButton.querySelector('.button-text') as HTMLElement;
+        const spinner = submitButton.querySelector('.spinner') as HTMLElement;
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            if (currentUser) {
+            submitButton.disabled = true;
+            buttonText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+
+            try {
+                if (!currentUser) {
+                    alert("Debes iniciar sesión para registrar una comida.");
+                    return;
+                }
+
                 const mealData = {
                     mealName: (document.getElementById('meal-name') as HTMLInputElement).value,
                     mealTime: (document.getElementById('meal-time') as HTMLInputElement).value,
@@ -186,28 +190,35 @@
                 };
 
                 const notionProperties = buildNotionProperties(mealData);
-
                 const localDb = await openDB();
                 const userData = await getUserDataFromDb(localDb, currentUser.uid);
 
-                if (userData && userData.notion_api_key) {
-                    await sendToNotion(notionProperties, userData.notion_api_key);
-                } else {
+                let apiKey = userData?.notion_api_key;
+
+                if (!apiKey) {
                     console.error("Notion API key not found. Forcing refresh.");
                     const refreshedData = await forceRefreshUserData(currentUser.uid);
-                    if(refreshedData && refreshedData.notion_api_key) {
-                        await sendToNotion(notionProperties, refreshedData.notion_api_key);
-                    } else {
-                         alert("Error: La clave de la API de Notion no está configurada. Por favor, guárdala en tu perfil.");
-                    }
+                    apiKey = refreshedData?.notion_api_key;
                 }
-            } else {
-                alert("Debes iniciar sesión para registrar una comida.");
+                
+                if (apiKey) {
+                    await sendToNotion(notionProperties, apiKey);
+                } else {
+                    alert("Error: La clave de la API de Notion no está configurada. Por favor, guárdala en tu perfil.");
+                }
+
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert('Hubo un error inesperado al procesar tu solicitud.');
+            } finally {
+                submitButton.disabled = false;
+                buttonText.classList.remove('hidden');
+                spinner.classList.add('hidden');
             }
         });
     });
 
-      function buildNotionProperties(mealData) {
+    function buildNotionProperties(mealData) {
         return {
             'Nombre': { title: [{ text: { content: mealData.mealName } }] },
             'Fecha de Consumo': { date: { start: mealData.mealTime } },
@@ -216,18 +227,18 @@
         };
     }
 
-      async function sendToNotion(properties, apiKey, isRetry = false) {
+    async function sendToNotion(properties, apiKey, isRetry = false) {
         const dbName = "Registro Comidas";
         let databaseId = null;
         let proxyResponse;
-        console.log(properties);
+
         try {
             proxyResponse = await fetch(`/api/notion-proxy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     endpoint: 'search',
-                    apiKey,
+                    notionApiKey: apiKey, 
                     body: { query: dbName, filter: { value: 'database', property: 'object' } }
                 })
             });
@@ -257,7 +268,7 @@
         } catch (error) {
             console.error(error);
             alert(`Error de Notion: ${error.message}`);
-            return;
+            throw error; 
         }
 
         const pageRequestBody = {
@@ -271,8 +282,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     endpoint: 'pages',
-                    apiKey,
-                    body: pageRequestBody // Enviamos el cuerpo completo y bien estructurado.
+                    notionApiKey: apiKey, 
+                    body: pageRequestBody
                 })
             });
 
@@ -282,18 +293,12 @@
             }
             
             alert("¡Comida registrada con éxito en Notion!");
-            (document.getElementById('meal-form-element') as HTMLFormElement).reset();
-            const dateTimeInput = document.getElementById('meal-time');
-            if (dateTimeInput) {
-                const now = new Date();
-                const timezoneOffset = now.getTimezoneOffset() * 60000;
-                const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
-                (dateTimeInput as HTMLInputElement).value = localISOTime;
-            }
+            resetForm();
 
         } catch (error) {
             console.error(error);
             alert(`Error de Notion: ${error.message}`);
+            throw error;
         }
     }
 </script>
