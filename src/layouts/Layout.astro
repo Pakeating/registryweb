@@ -69,7 +69,7 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
         // Health check to "wake up" the serverless backend on page load.
         (async () => {
             try {
-                const response = await fetch('/api/notion-proxy');
+                const response = await fetch('/api/proxy');
                 if (!response.ok) {
                     console.warn(`Backend health check failed with status: ${response.status}`);
                 }

@@ -1,5 +1,5 @@
 ---
-// src/components/Navbar.astro
+import StorageSelector from './StorageSelector.astro';
 ---
 <header class="navbar">
     <div class="navbar-container">
@@ -16,6 +16,9 @@
             <a href="/" class="nav-link">Inicio</a>
             <a href="/register" class="nav-link">Registrar Comida</a>
             <a href="/stats" class="nav-link">Estadísticas</a>
+            <div class="storage-selector-container">
+              <StorageSelector />
+            </div>
         </nav>
     </div>
 </header>
@@ -54,6 +57,7 @@
 
     .nav-links {
         display: flex;
+        align-items: center; /* Align items vertically */
         gap: 2rem; /* gap-8 */
     }
 
@@ -115,6 +119,10 @@
 
         .nav-links.is-open {
             display: flex; /* Show menu when active */
+        }
+        
+        .storage-selector-container {
+            margin-top: 1rem; /* Add some space in mobile view */
         }
     }
 </style>

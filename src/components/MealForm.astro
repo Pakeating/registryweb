@@ -25,6 +25,11 @@ import LoadingButton from './LoadingButton.astro';
       </div>
     </div>
 
+    <div class="form-group">
+      <label for="description" class="label">Observaciones</label>
+      <input type="text" id="description" name="description" class="input" required>
+    </div>
+
     <div class="form-actions">
         <LoadingButton id="submit-button" type="submit">
             Enviar
@@ -139,6 +144,8 @@ import LoadingButton from './LoadingButton.astro';
     import { auth } from "../firebase/config";
     import { onAuthStateChanged } from 'firebase/auth';
     import { openDB, getUserDataFromDb, forceRefreshUserData } from "../lib/auth";
+    import { checkNotionDB } from "../lib/notionUtils";
+    import { createCommandBody } from "../lib/objects.js";
 
     let currentUser = null;
 
@@ -146,9 +153,11 @@ import LoadingButton from './LoadingButton.astro';
         const mealNameInput = document.getElementById('meal-name') as HTMLInputElement;
         const dateTimeInput = document.getElementById('meal-time') as HTMLInputElement;
         const mealTypeSelect = document.getElementById('meal-type') as HTMLSelectElement;
+        const descriptionInput = document.getElementById('description') as HTMLInputElement;
 
         if (mealNameInput && dateTimeInput && mealTypeSelect) {
             mealNameInput.value = '';
+            descriptionInput.value = '';
             const now = new Date();
             const timezoneOffset = now.getTimezoneOffset() * 60000;
             const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
@@ -181,28 +190,29 @@ import LoadingButton from './LoadingButton.astro';
                     alert("Debes iniciar sesión para registrar una comida.");
                     return;
                 }
-
-                const mealData = {
-                    mealName: (document.getElementById('meal-name') as HTMLInputElement).value,
-                    mealTime: (document.getElementById('meal-time') as HTMLInputElement).value,
-                    mealType: (document.getElementById('meal-type') as HTMLSelectElement).value,
-                    audit: new Date().toISOString()
-                };
-
-                const notionProperties = buildNotionProperties(mealData);
+                const dbName = "Registro Comidas";
                 const localDb = await openDB();
                 const userData = await getUserDataFromDb(localDb, currentUser.uid);
-
+                
                 let apiKey = userData?.notion_api_key;
 
                 if (!apiKey) {
-                    console.error("Notion API key not found. Forcing refresh.");
+                    console.error("API key not found. Forcing refresh.");
                     const refreshedData = await forceRefreshUserData(currentUser.uid);
                     apiKey = refreshedData?.notion_api_key;
                 }
                 
                 if (apiKey) {
-                    await sendToNotion(notionProperties, apiKey);
+                    const commandRequest = createCommandBody();
+                    commandRequest.parameters.apiKey = apiKey;
+                    commandRequest.parameters.dbId = await checkNotionDB(dbName, apiKey);
+                    commandRequest.body.mealName = (document.getElementById('meal-name') as HTMLInputElement).value;
+                    commandRequest.body.mealTime = (document.getElementById('meal-time') as HTMLInputElement).value;
+                    commandRequest.body.mealType = (document.getElementById('meal-type') as HTMLSelectElement).value;
+                    commandRequest.body.mealDescription = (document.getElementById('description') as HTMLInputElement).value;
+                    commandRequest.body.mealAudit = new Date().toISOString();
+                    
+                    await sendToBack(commandRequest);
                 } else {
                     alert("Error: La clave de la API de Notion no está configurada. Por favor, guárdala en tu perfil.");
                 }
@@ -218,75 +228,14 @@ import LoadingButton from './LoadingButton.astro';
         });
     });
 
-    function buildNotionProperties(mealData) {
-        return {
-            'Nombre': { title: [{ text: { content: mealData.mealName } }] },
-            'Fecha de Consumo': { date: { start: mealData.mealTime } },
-            'Categoria de Comida': { select: { name: mealData.mealType } },
-            'Fecha de Registro': { date: { start: mealData.audit } }
-        };
-    }
-
-    async function sendToNotion(properties, apiKey, isRetry = false) {
-        const dbName = "Registro Comidas";
-        let databaseId = null;
-        let proxyResponse;
-
+    async function sendToBack(commandRequest) {
         try {
-            proxyResponse = await fetch(`/api/notion-proxy`, {
-                method: 'POST',
+            const proxyResponse = await fetch(`/api/proxy`, {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    endpoint: 'search',
-                    notionApiKey: apiKey, 
-                    body: { query: dbName, filter: { value: 'database', property: 'object' } }
-                })
-            });
-            
-            if (proxyResponse.status === 401 && !isRetry) {
-                console.warn("API Key no autorizada. Refrescando datos y reintentando...");
-                const refreshedData = await forceRefreshUserData(currentUser.uid);
-                if (refreshedData && refreshedData.notion_api_key) {
-                    await sendToNotion(properties, refreshedData.notion_api_key, true);
-                } else {
-                    throw new Error("La clave de API refrescada sigue sin ser válida o no se encontró.");
+                body: JSON.stringify(commandRequest)
                 }
-                return;
-            }
-
-            if (!proxyResponse.ok) {
-                const errorData = await proxyResponse.json();
-                throw new Error(errorData.message || `Error encontrando la base de datos: ${proxyResponse.statusText}`);
-            }
-
-            const searchData = await proxyResponse.json();
-            if (searchData.results.length > 0) {
-                databaseId = searchData.results[0].id;
-            } else {
-                throw new Error(`La base de datos "${dbName}" no se encontró o la integración no tiene acceso a ella.`);
-            }
-        } catch (error) {
-            console.error(error);
-            alert(`Error de Notion: ${error.message}`);
-            throw error; 
-        }
-
-        const pageRequestBody = {
-            parent: { database_id: databaseId },
-            properties: properties
-        };
-
-        try {
-            proxyResponse = await fetch(`/api/notion-proxy`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    endpoint: 'pages',
-                    notionApiKey: apiKey, 
-                    body: pageRequestBody
-                })
-            });
-
+              )
             if (!proxyResponse.ok) {
                 const errorData = await proxyResponse.json();
                 throw new Error(errorData.message || `Error creando la página: ${proxyResponse.statusText}`);

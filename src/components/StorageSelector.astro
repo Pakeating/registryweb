@@ -1,0 +1,74 @@
+---
+import { storageOptions } from '../lib/objects.js';
+const options = Object.values(storageOptions);
+---
+<div class="storage-selector-wrapper">
+  <label for="storage-select" class="label">Metodo de almacenamiento</label>
+  <div class="select-container">
+    <select id="storage-select" class="select">
+      {options.map(option => (
+        <option value={option}>{option}</option>
+      ))}
+    </select>
+  </div>
+</div>
+
+<style>
+  .storage-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary-color, #44403C);
+  }
+  .label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .select-container {
+    position: relative;
+  }
+  .select {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    border: 1px solid var(--border-color, #D6D3D1);
+    border-radius: 0.375rem;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary-color, #44403C);
+    background-color: var(--secondary-color, #FFFFFF);
+    appearance: none;
+    cursor: pointer;
+  }
+  .select-container::after {
+    content: '\25BC';
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-secondary-color, #44403C);
+    font-size: 0.75rem;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const storageSelect = document.getElementById('storage-select') as HTMLSelectElement;
+
+    if (storageSelect) {
+      // On page load, set the select value from localStorage
+      const savedStorageOption = localStorage.getItem('storageOption');
+      if (savedStorageOption) {
+        storageSelect.value = savedStorageOption;
+      } else {
+        // If nothing is saved, save the default value
+        localStorage.setItem('storageOption', storageSelect.value);
+      }
+
+      // Save the selected value to localStorage on change
+      storageSelect.addEventListener('change', (event) => {
+        const selectedOption = (event.target as HTMLSelectElement).value;
+        localStorage.setItem('storageOption', selectedOption);
+      });
+    }
+  });
+</script>
