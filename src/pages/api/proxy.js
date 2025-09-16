@@ -111,7 +111,7 @@ async function notionQueryProxy(query) {
       });
     }
 
-    if(!query.body.filter || !query.body.filter.properties){
+    if(!query.body.filter){
       query.body = {};
     }
     const notionApiUrl = new URL(parameters.endpoint, NOTION_API_BASE_URL);
