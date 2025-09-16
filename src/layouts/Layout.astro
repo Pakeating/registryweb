@@ -1,5 +1,6 @@
 ---
 import Navbar from '../components/Navbar.astro';
+import FeedbackIcon from '../components/FeedbackIcon.astro'; // Importamos el nuevo componente
 
 // Original manifest with relative paths
 const manifest = {
@@ -58,6 +59,7 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
 	<body>
     <Navbar />
 		<slot />
+    <FeedbackIcon client:load />
     <script>
         import { registerSW } from 'virtual:pwa-register';
         import { auth } from '../firebase/config.ts';

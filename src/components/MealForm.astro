@@ -1,17 +1,30 @@
 ---
-import LoadingButton from './LoadingButton.astro';
+import LoadingButton from "./LoadingButton.astro";
 ---
+
 <div class="meal-form">
   <h2 class="title">Registrar Comida</h2>
   <form id="meal-form-element">
     <div class="form-group">
       <label for="meal-name" class="label">Nombre de la comida</label>
-      <input type="text" id="meal-name" name="meal-name" class="input" required>
+      <input
+        type="text"
+        id="meal-name"
+        name="meal-name"
+        class="input"
+        required
+      />
     </div>
 
     <div class="form-group">
       <label for="meal-time" class="label">Momento del consumo</label>
-      <input type="datetime-local" id="meal-time" name="meal-time" class="input" required>
+      <input
+        type="datetime-local"
+        id="meal-time"
+        name="meal-time"
+        class="input"
+        required
+      />
     </div>
 
     <div class="form-group">
@@ -27,126 +40,195 @@ import LoadingButton from './LoadingButton.astro';
 
     <div class="form-group">
       <label for="description" class="label">Observaciones</label>
-      <textarea id="description" name="description" class="textarea" placeholder="Ej: Me sentía un poco bajo de energía..."></textarea>
+      <textarea
+        id="description"
+        name="description"
+        class="textarea"
+        placeholder="Ej: Me sentía un poco bajo de energía..."></textarea>
     </div>
 
     <div class="form-group">
-        <LoadingButton id="submit-button" type="submit">
-            Enviar
-        </LoadingButton>
+      <LoadingButton id="submit-button" type="submit"> Enviar </LoadingButton>
     </div>
   </form>
 </div>
 
 <style>
-  .meal-form { max-width: 500px; margin: 2rem auto; padding: 2rem; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05); color: #1C1917; }
-  .title { text-align: center; font-size: 1.75rem; margin-bottom: 2rem; font-weight: 600; }
-  .form-group { margin-bottom: 1.5rem; }
-  .label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #57534E; }
-  .input, .select, .textarea { width: 100%; padding: 0.75rem; border: 1px solid #D4D4D8; border-radius: 6px; background-color: #FFFFFF; color: #1C1917; font-family: inherit; }
-  .input:focus, .select:focus, .textarea:focus { outline: none; border-color: #1C1917; box-shadow: 0 0 0 2px rgba(28, 25, 23, 0.2); }
-  .select-wrapper { position: relative; }
-  .select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
-  .textarea { min-height: 100px; resize: vertical; }
+  .meal-form {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    color: #1c1917;
+  }
+  .title {
+    text-align: center;
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+    font-weight: 600;
+  }
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #57534e;
+  }
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #1c1917;
+    font-family: inherit;
+  }
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    outline: none;
+    border-color: #1c1917;
+    box-shadow: 0 0 0 2px rgba(28, 25, 23, 0.2);
+  }
+  .select-wrapper {
+    position: relative;
+  }
+  .select {
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+  .textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
 </style>
 
 <script>
-    import { createCommandBody } from '../lib/objects';
-    import { getNotionCredentials, checkNotionDB } from '../lib/notionUtils.js';
+  import { createCommandBody } from "../lib/objects";
+  import { getNotionCredentials, checkNotionDB } from "../lib/notionUtils.js";
 
-    const form = document.getElementById('meal-form-element');
-    const submitButton = document.getElementById('submit-button');
+  const form = document.getElementById("meal-form-element");
+  const submitButton = document.getElementById("submit-button");
 
-    function setLoading(isLoading) {
-        if (!submitButton) return;
+  function setLoading(isLoading) {
+    if (!submitButton) return;
 
-        const textElement = submitButton.querySelector('.button-text');
-        const spinnerElement = submitButton.querySelector('.spinner');
+    const textElement = submitButton.querySelector(".button-text");
+    const spinnerElement = submitButton.querySelector(".spinner");
 
-        submitButton.disabled = isLoading;
+    submitButton.disabled = isLoading;
 
-        if (isLoading) {
-            textElement.classList.add('hidden');
-            spinnerElement.classList.remove('hidden');
-        } else {
-            textElement.classList.remove('hidden');
-            spinnerElement.classList.add('hidden');
-        }
+    if (isLoading) {
+      textElement.classList.add("hidden");
+      spinnerElement.classList.remove("hidden");
+    } else {
+      textElement.classList.remove("hidden");
+      spinnerElement.classList.add("hidden");
     }
+  }
 
-    function resetForm() {
-        const mealNameInput = document.getElementById('meal-name') as HTMLInputElement;
-        const dateTimeInput = document.getElementById('meal-time') as HTMLInputElement;
-        const mealTypeSelect = document.getElementById('meal-type') as HTMLSelectElement;
-        const descriptionInput = document.getElementById('description') as HTMLInputElement;
+  function resetForm() {
+    const mealNameInput = document.getElementById("meal-name") as HTMLInputElement;
+    const dateTimeInput = document.getElementById("meal-time") as HTMLInputElement;
+    const mealTypeSelect = document.getElementById("meal-type") as HTMLSelectElement;
+    const descriptionInput = document.getElementById("description") as HTMLInputElement;
 
-        if (mealNameInput && dateTimeInput && mealTypeSelect) {
-            mealNameInput.value = '';
-            descriptionInput.value = '';
-            const now = new Date();
-            const timezoneOffset = now.getTimezoneOffset() * 60000;
-            const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
-            dateTimeInput.value = localISOTime;
-            mealTypeSelect.value = 'Comida planificada';
-        }
+    if (mealNameInput && dateTimeInput && mealTypeSelect) {
+      mealNameInput.value = "";
+      descriptionInput.value = "";
+      const now = new Date();
+      const timezoneOffset = now.getTimezoneOffset() * 60000;
+      const localISOTime = new Date(now - timezoneOffset)
+        .toISOString()
+        .slice(0, 16);
+      dateTimeInput.value = localISOTime;
+      mealTypeSelect.value = "Comida planificada";
     }
+  }
 
-    async function sendToBack(command) {
-        try {
-            const response = await fetch('/api/proxy', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(command),
-            });
+  async function sendToBack(command) {
+    try {
+      const response = await fetch("/api/proxy", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(command),
+      });
 
-            if (!response.ok) {
-                 const errorData = await response.json();
-                 const errorMessage = errorData.message || 'Error desconocido del servidor.';
-                 throw new Error(`Error del backend: ${errorMessage}`);
-            }
-            
-            await response.json();
-            alert('¡Comida registrada con éxito!');
-            resetForm();
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage =
+          errorData.message || "Error desconocido del servidor.";
+        throw new Error(`Error del backend: ${errorMessage}`);
+      }
 
-        } catch (error) {
-            // Lanzamos el error para que sea capturado por el manejador principal
-            throw error;
-        }
+      await response.json();
+      alert("¡Comida registrada con éxito!"); // <-- ALERTA RESTAURADA
+      resetForm();
+    } catch (error) {
+      // Lanzamos el error para que sea capturado por el manejador principal
+      throw error;
     }
+  }
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        setLoading(true);
-        
-        try {
-            // 1. Obtenemos las credenciales con la nueva función centralizada.
-            const { apiKey, dbName } = await getNotionCredentials();
-            const dbId = await checkNotionDB(dbName, apiKey);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    // Disparar el evento de feedback visual ANTES de la llamada a la API
+    let feedbackType = "";
+    let mealType = (document.getElementById("meal-type") as HTMLSelectElement).value;
+    if (mealType === "Comida planificada") {
+      feedbackType = "success";
+    } else if (mealType === "Picoteo" || mealType === "Picoteo Social") {
+      feedbackType = "error";
+    }
+    if (feedbackType) {
+      const feedbackEvent = new CustomEvent("show-feedback", {
+        detail: { type: feedbackType },
+      });
+      document.dispatchEvent(feedbackEvent);
+    }
+    setLoading(true);
 
-            // 2. Creamos el cuerpo de la petición.
-            const commandRequest = createCommandBody();
-            commandRequest.parameters.apiKey = apiKey;
-            commandRequest.parameters.dbId = dbId;
-            commandRequest.body.mealName = (document.getElementById('meal-name') as HTMLInputElement).value;
-            commandRequest.body.mealTime = (document.getElementById('meal-time') as HTMLInputElement).value;
-            commandRequest.body.mealType = (document.getElementById('meal-type') as HTMLSelectElement).value;
-            commandRequest.body.mealDescription = (document.getElementById('description') as HTMLInputElement).value;
-            commandRequest.body.mealAudit = new Date().toISOString();
-            
-            // 3. Enviamos la petición.
-            await sendToBack(commandRequest);
+    try {
+      // 1. Obtenemos las credenciales con la nueva función centralizada.
+      const { apiKey, dbName } = await getNotionCredentials();
+      const dbId = await checkNotionDB(dbName, apiKey);
 
-        } catch (error) {
-            // 4. Un único punto para manejar cualquier error del proceso.
-            console.error("Error durante el registro de la comida:", error);
-            alert(`Error: ${error.message}`);
-        } finally {
-            // 5. Nos aseguramos de que el botón de carga siempre se desactive.
-            setLoading(false);
-        }
-    });
+      // 2. Creamos el cuerpo de la petición.
+      const commandRequest = createCommandBody();
+      commandRequest.parameters.apiKey = apiKey;
+      commandRequest.parameters.dbId = dbId;
+      
+      const mealTimeValue = (document.getElementById("meal-time") as HTMLInputElement).value;
 
-    // Inicializar el formulario con la fecha y hora actuales al cargar la página.
-    document.addEventListener('DOMContentLoaded', resetForm);
+      commandRequest.body.mealName = (document.getElementById("meal-name") as HTMLInputElement).value;
+      commandRequest.body.mealTime = new Date(mealTimeValue).toISOString(); // <-- CORRECCIÓN APLICADA
+      commandRequest.body.mealType = mealType;
+      commandRequest.body.mealDescription = (document.getElementById("description") as HTMLInputElement).value;
+      commandRequest.body.mealAudit = new Date().toISOString();
+
+      // 3. Enviamos la petición.
+      await sendToBack(commandRequest);
+    } catch (error) {
+      // 4. Un único punto para manejar cualquier error del proceso.
+      console.error("Error durante el registro de la comida:", error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      // 5. Nos aseguramos de que el botón de carga siempre se desactive.
+      setLoading(false);
+    }
+  });
+
+  // Inicializar el formulario con la fecha y hora actuales al cargar la página.
+  document.addEventListener("DOMContentLoaded", resetForm);
 </script>
