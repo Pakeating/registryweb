@@ -288,20 +288,25 @@
         
         try {
             const rawData = await fetchData(startDate, endDate);
-            const data = transformNotionData(rawData);
+            let data = transformNotionData(rawData);
 
-            // Ordenar los datos por fecha de consumo de forma centralizada.
-            if (data && data.length > 0) {
-                data.sort((a, b) => new Date(a.consumptionDate) - new Date(b.consumptionDate));
+            // Filtrar los datos para excluir registros sin categoría.
+            data = data.filter(item => item.category && item.category !== '');
+
+            // Ordenar los datos por fecha de consumo (más recientes primero).
+            if (data.length > 0) {
+                data.sort((a, b) => new Date(b.consumptionDate) - new Date(a.consumptionDate));
             }
 
-            if (data && data.length > 0) {
+            if (data.length > 0) {
                 if (!chartsView.classList.contains('hidden')) {
-                    if (!historyContainer.classList.contains('hidden')) renderHistoryChart(data);
-                    if (!typeContainer.classList.contains('hidden')) renderTypeChart(data);
+                    // Para el gráfico, necesitamos los datos en orden cronológico ascendente.
+                    const chartData = [...data].sort((a, b) => new Date(a.consumptionDate) - new Date(b.consumptionDate));
+                    if (!historyContainer.classList.contains('hidden')) renderHistoryChart(chartData);
+                    if (!typeContainer.classList.contains('hidden')) renderTypeChart(data); // El orden no importa para el gráfico de tipos
                 }
                 if (!tableView.classList.contains('hidden')) {
-                    renderTable(data);
+                    renderTable(data); // Usa los datos ya ordenados de forma descendente
                 }
             } else {
                 if (historyChartInstance) historyChartInstance.destroy();
@@ -326,7 +331,7 @@
             return {
                 name: props['Nombre']?.title[0]?.plain_text ?? 'Sin nombre',
                 consumptionDate: props['Fecha de Consumo']?.date?.start ?? page.created_time,
-                category: props['Categoria de Comida']?.select?.name ?? 'Indefinido',
+                category: props['Categoria de Comida']?.select?.name ?? '',
                 notes: props['Observaciones']?.rich_text[0]?.plain_text ?? ''
             };
         });
@@ -336,9 +341,10 @@
         toggleLoading(true);
         try {
             const { apiKey, dbId } = await getNotionCredentials();
-            const query = createQueryBody(startDate, endDate);
+            const query = createQueryBody();
             query.parameters.apiKey = apiKey;
             query.parameters.dbId = dbId;
+            query.body.filter = '';
 
             const response = await fetch('/api/proxy', {
                 method: 'POST',
@@ -483,6 +489,7 @@
         plugins: { legend: { position: isDoughnut ? 'top' : 'bottom', labels: { color: themeColors.text } } },
         scales: isDoughnut ? {} : {
             y: {
+                beginAtZero: true,
                 ticks: {
                     color: themeColors.text,
                     callback: function(value) {
