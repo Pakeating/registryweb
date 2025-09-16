@@ -33,7 +33,7 @@
 
         <div class="charts-grid" id="chartsView">
             <div id="historyChartContainer" class="chart-container">
-                <h3>Histórico de Registros</h3>
+                <h3>Histórico de Picoteos</h3>
                 <div class="chart-wrapper">
                     <canvas id="historyChart"></canvas>
                 </div>
@@ -410,7 +410,9 @@
         if (historyChartInstance) historyChartInstance.destroy();
         if (!historyCtx) return;
 
-        const countsByDate = data.reduce((acc, item) => {
+        const filteredData = data.filter(item => item.category !== 'Comida Planificada');
+
+        const countsByDate = filteredData.reduce((acc, item) => {
             const dateKey = item.consumptionDate.slice(0, 10);
             acc[dateKey] = (acc[dateKey] || 0) + 1;
             return acc;
@@ -430,7 +432,7 @@
             data: {
                 labels: chartLabels,
                 datasets: [{
-                    label: 'Número de Registros',
+                    label: 'Número de Picoteos',
                     data: chartData,
                     borderColor: '#1C1917',
                     backgroundColor: 'rgba(28, 25, 23, 0.1)',
