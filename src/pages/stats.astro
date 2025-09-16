@@ -1,34 +1,64 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import StatsDashboard from '../components/StatsDashboard.astro';
 ---
 
 <Layout title="Estadísticas">
-    <main>
-        <h1 class="page-title">Tus Estadísticas</h1>
-        <p class="placeholder-text">Aquí se mostrarán pronto tus estadísticas de comidas.</p>
+    <main class="stats-container">
+        <h1 class="stats-title">Tu Progreso y Estadísticas</h1>
+        
+        <p class="stats-description">
+            Visualiza tus datos de comidas a lo largo del tiempo. Selecciona un rango de fechas para generar los gráficos correspondientes.
+        </p>
+
+        <!-- 
+            Aquí está la magia de Astro Islands:
+            - Importamos el componente StatsDashboard.
+            - Usamos `client:load` para decirle a Astro que este componente 
+              necesita JavaScript y debe ejecutarse en el navegador tan pronto
+              como la página cargue.
+        -->
+        <StatsDashboard client:load />
+
     </main>
 </Layout>
 
 <style>
-    main {
-        padding: 2rem;
-        max-width: 72rem; 
+    .stats-container {
+        max-width: 1100px;
         margin: 0 auto;
-        text-align: center;
+        padding: 1rem 1.5rem;
     }
-    .page-title {
-        font-size: 2.25rem; 
+
+    .stats-title {
+        font-size: 2.5rem;
         font-weight: 700;
-        color: #1C1917;
-        margin-bottom: 1rem;
+        text-align: center;
+        margin: 2rem 0;
     }
-    .placeholder-text {
-        font-size: 1.125rem; 
-        color: #44403C;
+
+    .stats-description {
+        text-align: center;
+        font-size: 1.125rem;
+        margin-bottom: 2.5rem;
+        max-width: 60ch;
+        margin-left: auto;
+        margin-right: auto;
+        color: #57534E; /* Tono de gris suave para el texto descriptivo */
+    }
+
+    /* Media Query para pantallas más pequeñas */
+    @media (max-width: 768px) {
+        .stats-title {
+            font-size: 2rem;
+        }
+
+        .stats-description {
+            font-size: 1rem;
+        }
+
+        .stats-container {
+            padding: 1rem;
+        }
     }
 </style>
-
-<script>
-    import { initializeAuth } from '../lib/auth';
-    initializeAuth();
-</script>

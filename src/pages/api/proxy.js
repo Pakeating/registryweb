@@ -16,7 +16,17 @@ export async function GET() {
  * Actúa como un proxy seguro para la API de Notion. Se usará para todas las consultas a la API de Notion que no modifican datos.
  */
 export async function POST({ request }) {
-  return notionQueryProxy(request);
+  const query = await request.json();
+  switch(query.parameters.storageOption){
+    case 'NOTION':
+      return notionQueryProxy(query);      
+
+    default: 
+      return new Response(JSON.stringify({ message: 'La opción de almacenamiento no es válida' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+  }
 }
 
 /**
@@ -90,28 +100,31 @@ async function notionCommandProxy(command) {
 /**
  * Handles the Query for notion
  */
-async function notionQueryProxy(request) {
+async function notionQueryProxy(query) {
   try {
-    const { endpoint, notionApiKey, body: requestBody } = await request.json();
+    const parameters = query.parameters;
 
-    if (!endpoint || !notionApiKey) {
+    if (!parameters.endpoint || !parameters.apiKey) {
       return new Response(JSON.stringify({ message: 'El endpoint y la API key de Notion son requeridos' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const notionApiUrl = new URL(endpoint, NOTION_API_BASE_URL);
+    if(!query.body.filter || !query.body.filter.properties){
+      query.body = {};
+    }
+    const notionApiUrl = new URL(parameters.endpoint, NOTION_API_BASE_URL);
     const options = {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${notionApiKey}`,
+        'Authorization': `Bearer ${parameters.apiKey}`,
         'Content-Type': 'application/json',
         'Notion-Version': '2022-06-28'
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(query.body)
     };
-
+    console.log(options);
     const notionResponse = await fetch(notionApiUrl.toString(), options);
     const data = await notionResponse.json();
 

@@ -2,16 +2,39 @@ export const storageOptions = {
   notion_storage: "NOTION"
 };
 
-export const queryBody = {
-  endpoint: "search",
-  notionApiKey: "",
-  body: {
-    query: "",
-    filter: {
-      value: "database",
-      property: "object"
+export function createQueryBody() {
+  return {
+    parameters: {
+      endpoint: "search",
+      apiKey: "",
+      dbId: "",
+      storageOption: "NOTION"
+    },
+    body: {
+      query: "",
+      filter: {
+
+      }
     }
-  }
+  };
+};
+
+export function createDbIdQueryBody() {
+  return {
+    parameters: {
+      endpoint: "search",
+      apiKey: "",
+      dbId: "",
+      storageOption: "NOTION"
+    },
+    body: {
+      query: "",
+      filter: {
+        value: "database",
+        property: "object"
+      }
+    }
+  };
 };
 
 /**

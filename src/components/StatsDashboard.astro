@@ -1,0 +1,499 @@
+---
+// Componente isla para el panel de estadísticas con vista de tabla y gráficos.
+---
+<div class="stats-dashboard">
+    <div class="card">
+        <h2 class="title">Análisis de Picoteos</h2>
+        
+        <div class="controls-container">
+            <div class="control-group">
+                <label for="dateRangeSelector">Rango de Fechas</label>
+                <select id="dateRangeSelector" class="select">
+                    <option value="all" selected>Desde el inicio</option>
+                    <option value="week"disabled>Última semana</option>
+                    <option value="month" disabled>Último mes</option>
+                    <option value="today"disabled>Hoy</option>
+                    
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="viewSelector">Vista</label>
+                <select id="viewSelector" class="select">
+                    <option value="summary" selected>Resumen (Gráficos)</option>
+                    <option value="table">Tabla de Datos</option>
+                    <option value="history">Solo Histórico</option>
+                    <option value="type">Solo Tipos</option>
+                    <option value="heatmap" disabled>Mapa de Calor (Próximamente)</option>
+                </select>
+            </div>
+            <button id="fetchData" class="btn">Generar Vista</button>
+        </div>
+
+        <div id="loading" class="loading-indicator" style="display: none;">Cargando...</div>
+
+        <div class="charts-grid" id="chartsView">
+            <div id="historyChartContainer" class="chart-container">
+                <h3>Histórico de Registros</h3>
+                <div class="chart-wrapper">
+                    <canvas id="historyChart"></canvas>
+                </div>
+            </div>
+            <div id="typeChartContainer" class="chart-container">
+                <h3>Tipos de Comida</h3>
+                <div class="chart-wrapper">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="tableView" class="table-container hidden">
+            <h3>Tabla de Registros</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Fecha de Consumo</th>
+                            <th>Categoría</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stats-dashboard .card {
+        background-color: #FFFFFF;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        color: #1C1917;
+    }
+
+    .title {
+        text-align: center;
+        font-size: 1.75rem;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .controls-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .control-group label {
+        font-size: 0.9rem;
+        color: #57534E;
+    }
+
+    .select {
+        width: 100%;
+        background-color: #FFFFFF;
+        border: 1px solid #D4D4D8;
+        color: #1C1917;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-family: inherit;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background-color: #1C1917;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+        background-color: #3a3533;
+    }
+
+    .btn:disabled {
+        background-color: #A8A29E;
+        cursor: not-allowed;
+    }
+
+    .loading-indicator {
+        text-align: center;
+        margin: 2rem 0;
+        font-size: 1.2rem;
+        color: #1C1917;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .chart-container {
+        background-color: #F5F5F4;
+        padding: 1.5rem;
+        border-radius: 8px;
+        /* Esto asegura que el contenedor no se desborde */
+        overflow: hidden;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        /* Altura fija para el lienzo del gráfico */
+        height: 300px;
+        /* Aseguramos que el canvas no se desborde */
+        max-width: 100%;
+    }
+
+    .chart-container h3 {
+        text-align: center;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #1C1917;
+    }
+
+    .table-container {
+        background-color: #F5F5F4;
+        padding: 1.5rem;
+        border-radius: 8px;
+        overflow: hidden; /* Evita desbordamientos */
+    }
+
+    .table-container h3 {
+        text-align: center;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #1C1917;
+    }
+
+    .table-wrapper {
+        overflow-x: auto; /* Permite scroll horizontal en la tabla si es necesario */
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    th, td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #D4D4D8;
+    }
+
+    th {
+        background-color: #FFFFFF;
+        font-weight: 600;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #FFFFFF;
+    }
+
+    /* --- Media Queries para Responsive Design --- */
+
+    @media (min-width: 768px) {
+        .controls-container {
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .control-group {
+            flex-grow: 1;
+        }
+
+        .btn {
+            width: auto; /* El botón ocupa su propio espacio */
+            flex-shrink: 0;
+        }
+    }
+
+    /* En pantallas grandes, usamos dos columnas para los gráficos */
+    @media (min-width: 1024px) {
+        .charts-grid.summary-view {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+</style>
+
+<script>
+    import Chart from 'chart.js/auto';
+    import { createQueryBody } from '../lib/objects';
+    import { getNotionCredentials } from '../lib/notionUtils.js';
+
+    // 1. CONFIGURACIÓN Y REFERENCIAS AL DOM
+    const themeColors = { text: '#1C1917', secondary: '#D4D4D8', background: '#F5F5F4', social: '#36a2eb', planned: '#4bc0c0', unplanned: '#ffcd56' };
+    const dateRangeSelector = document.getElementById('dateRangeSelector');
+    const viewSelector = document.getElementById('viewSelector');
+    const fetchDataButton = document.getElementById('fetchData');
+    const loadingIndicator = document.getElementById('loading');
+    
+    const chartsView = document.getElementById('chartsView');
+    const tableView = document.getElementById('tableView');
+    const historyContainer = document.getElementById('historyChartContainer');
+    const typeContainer = document.getElementById('typeChartContainer');
+    const dataTableBody = document.getElementById('dataTableBody');
+
+    const historyCtx = document.getElementById('historyChart')?.getContext('2d');
+    const typeCtx = document.getElementById('typeChart')?.getContext('2d');
+
+    let historyChartInstance, typeChartInstance;
+
+    // 2. FLUJO PRINCIPAL Y EVENT LISTENERS
+    document.addEventListener('DOMContentLoaded', initializeComponent);
+    fetchDataButton?.addEventListener('click', handleGenerateView);
+    viewSelector?.addEventListener('change', handleViewChange);
+
+    // 3. FUNCIONES DE LÓGICA
+
+    function initializeComponent() {
+        updateViewVisibility();
+    }
+
+    async function handleGenerateView() {
+        updateViewVisibility();
+        const { startDate, endDate } = getDateRange();
+        
+        try {
+            const rawData = await fetchData(startDate, endDate);
+            const data = transformNotionData(rawData);
+
+            // Ordenar los datos por fecha de consumo de forma centralizada.
+            if (data && data.length > 0) {
+                data.sort((a, b) => new Date(a.consumptionDate) - new Date(b.consumptionDate));
+            }
+
+            if (data && data.length > 0) {
+                if (!chartsView.classList.contains('hidden')) {
+                    if (!historyContainer.classList.contains('hidden')) renderHistoryChart(data);
+                    if (!typeContainer.classList.contains('hidden')) renderTypeChart(data);
+                }
+                if (!tableView.classList.contains('hidden')) {
+                    renderTable(data);
+                }
+            } else {
+                if (historyChartInstance) historyChartInstance.destroy();
+                if (typeChartInstance) typeChartInstance.destroy();
+                if (dataTableBody) dataTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay datos para el rango seleccionado.</td></tr>';
+            }
+        } catch (error) {
+            console.error("Error al generar la vista:", error);
+            alert(`Error: ${error.message}`);
+            toggleLoading(false);
+        }
+    }
+
+    function handleViewChange() {
+        updateViewVisibility();
+    }
+
+    function transformNotionData(notionPages) {
+        if (!Array.isArray(notionPages)) return [];
+        return notionPages.map(page => {
+            const props = page.properties;
+            return {
+                name: props['Nombre']?.title[0]?.plain_text ?? 'Sin nombre',
+                consumptionDate: props['Fecha de Consumo']?.date?.start ?? page.created_time,
+                category: props['Categoria de Comida']?.select?.name ?? 'Indefinido',
+                notes: props['Observaciones']?.rich_text[0]?.plain_text ?? ''
+            };
+        });
+    }
+
+    async function fetchData(startDate, endDate) {
+        toggleLoading(true);
+        try {
+            const { apiKey, dbId } = await getNotionCredentials();
+            const query = createQueryBody(startDate, endDate);
+            query.parameters.apiKey = apiKey;
+            query.parameters.dbId = dbId;
+
+            const response = await fetch('/api/proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(query),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'El backend falló al recuperar los datos.');
+            }
+            
+            const data = await response.json();
+            return data.results || [];
+
+        } catch (error) {
+            throw error;
+        } finally {
+            toggleLoading(false);
+        }
+    }
+
+    // 4. FUNCIONES DE RENDERIZADO
+
+    function updateViewVisibility() {
+        const selection = viewSelector.value;
+        chartsView.classList.add('hidden');
+        tableView.classList.add('hidden');
+        historyContainer.classList.add('hidden');
+        typeContainer.classList.add('hidden');
+        chartsView.classList.remove('summary-view');
+
+        if (selection === 'summary') {
+            chartsView.classList.remove('hidden');
+            historyContainer.classList.remove('hidden');
+            typeContainer.classList.remove('hidden');
+            chartsView.classList.add('summary-view');
+        } else if (selection === 'table') {
+            tableView.classList.remove('hidden');
+        } else if (selection === 'history') {
+            chartsView.classList.remove('hidden');
+            historyContainer.classList.remove('hidden');
+        } else if (selection === 'type') {
+            chartsView.classList.remove('hidden');
+            typeContainer.classList.remove('hidden');
+        }
+    }
+    
+    function renderTable(data) {
+        if (!dataTableBody) return;
+        dataTableBody.innerHTML = '';
+
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            const date = new Date(item.consumptionDate).toLocaleString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            
+            row.innerHTML = `<td>${item.name}</td><td>${date}</td><td>${item.category}</td><td>${item.notes}</td>`;
+            dataTableBody.appendChild(row);
+        });
+    }
+
+    function renderHistoryChart(data) {
+        if (historyChartInstance) historyChartInstance.destroy();
+        if (!historyCtx) return;
+
+        const countsByDate = data.reduce((acc, item) => {
+            const dateKey = item.consumptionDate.slice(0, 10);
+            acc[dateKey] = (acc[dateKey] || 0) + 1;
+            return acc;
+        }, {});
+
+        const sortedDateKeys = Object.keys(countsByDate).sort();
+
+        const chartLabels = sortedDateKeys.map(key => {
+            const [year, month, day] = key.split('-');
+            return `${day}/${month}`;
+        });
+
+        const chartData = sortedDateKeys.map(key => countsByDate[key]);
+
+        historyChartInstance = new Chart(historyCtx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Número de Registros',
+                    data: chartData,
+                    borderColor: '#1C1917',
+                    backgroundColor: 'rgba(28, 25, 23, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: chartOptions()
+        });
+    }
+
+    function renderTypeChart(data) {
+        if (typeChartInstance) typeChartInstance.destroy();
+        if (!typeCtx) return;
+        const typeCounts = data.reduce((acc, item) => {
+            const type = item.category;
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+        }, {});
+        const labels = ['Picoteo Social', 'Comida Planificada', 'Picoteo'];
+        const chartData = labels.map(label => typeCounts[label] || 0);
+        typeChartInstance = new Chart(typeCtx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: chartData, backgroundColor: [themeColors.social, themeColors.planned, themeColors.unplanned], borderColor: themeColors.background, borderWidth: 4 }] }, options: chartOptions(true) });
+    }
+
+    // 5. FUNCIONES AUXILIARES
+
+    function getDateRange() {
+        const selected = dateRangeSelector.value;
+        const now = new Date();
+        let startDate = new Date();
+
+        switch (selected) {
+            case 'today':
+                startDate.setHours(0, 0, 0, 0);
+                return { startDate: startDate.toISOString(), endDate: now.toISOString() };
+            case 'week':
+                startDate.setDate(now.getDate() - 7);
+                break;
+            case 'month':
+                startDate.setMonth(now.getMonth() - 1);
+                break;
+            case 'all':
+                startDate = new Date(0); // Epoch
+                break;
+        }
+         return { startDate: startDate.toISOString(), endDate: now.toISOString() };
+    }
+
+    function toggleLoading(isLoading) {
+        loadingIndicator.style.display = isLoading ? 'block' : 'none';
+        fetchDataButton.disabled = isLoading;
+    }
+
+    const chartOptions = (isDoughnut = false) => ({
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: isDoughnut ? 'top' : 'bottom', labels: { color: themeColors.text } } },
+        scales: isDoughnut ? {} : {
+            y: {
+                ticks: {
+                    color: themeColors.text,
+                    callback: function(value) {
+                        if (Number.isInteger(value)) {
+                            return value;
+                        }
+                    },
+                },
+                grid: { color: themeColors.secondary }
+            },
+            x: { ticks: { color: themeColors.text }, grid: { color: themeColors.secondary } }
+        }
+    });
+</script>
