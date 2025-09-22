@@ -9,10 +9,10 @@
             <div class="control-group">
                 <label for="dateRangeSelector">Rango de Fechas</label>
                 <select id="dateRangeSelector" class="select">
-                    <option value="all" selected>Desde el inicio</option>
-                    <option value="week"disabled>Última semana</option>
-                    <option value="month" disabled>Último mes</option>
-                    <option value="today"disabled>Hoy</option>
+                    <option value="all">Desde el inicio</option>
+                    <option value="week">Última semana</option>
+                    <option value="month">Último mes</option>
+                    <option value="today" selected>Hoy</option>
                     
                 </select>
             </div>
@@ -158,15 +158,12 @@
         background-color: #F5F5F4;
         padding: 1.5rem;
         border-radius: 8px;
-        /* Esto asegura que el contenedor no se desborde */
         overflow: hidden;
     }
 
     .chart-wrapper {
         position: relative;
-        /* Altura fija para el lienzo del gráfico */
         height: 300px;
-        /* Aseguramos que el canvas no se desborde */
         max-width: 100%;
     }
 
@@ -181,7 +178,7 @@
         background-color: #F5F5F4;
         padding: 1.5rem;
         border-radius: 8px;
-        overflow: hidden; /* Evita desbordamientos */
+        overflow: hidden;
     }
 
     .table-container h3 {
@@ -192,7 +189,7 @@
     }
 
     .table-wrapper {
-        overflow-x: auto; /* Permite scroll horizontal en la tabla si es necesario */
+        overflow-x: auto;
     }
 
     table {
@@ -234,7 +231,7 @@
         }
 
         .btn {
-            width: auto; /* El botón ocupa su propio espacio */
+            width: auto;
             flex-shrink: 0;
         }
     }
@@ -251,7 +248,7 @@
 <script>
     import Chart from 'chart.js/auto';
     import { createQueryBody } from '../lib/objects';
-    import { getNotionCredentials } from '../lib/notionUtils.js';
+    import { getNotionCredentials, checkNotionDB } from '../lib/notionUtils.js';
 
     // 1. CONFIGURACIÓN Y REFERENCIAS AL DOM
     const themeColors = { text: '#1C1917', secondary: '#D4D4D8', background: '#F5F5F4', social: '#36a2eb', planned: '#4bc0c0', unplanned: '#ffcd56' };
@@ -340,11 +337,20 @@
     async function fetchData(startDate, endDate) {
         toggleLoading(true);
         try {
-            const { apiKey, dbId } = await getNotionCredentials();
+            const { apiKey, dbName } = await getNotionCredentials();
             const query = createQueryBody();
+
             query.parameters.apiKey = apiKey;
-            query.parameters.dbId = dbId;
-            query.body.filter = '';
+            query.parameters.dbId = await checkNotionDB(dbName, apiKey);
+            query.parameters.searchType = 'CONTENT';
+            // query.body.filter = '';
+            query.body.filter = {
+                        property: 'Fecha de Consumo',
+                        date: {
+                            on_or_after: startDate
+                        }
+                    };
+            console.log(query);
 
             const response = await fetch('/api/proxy', {
                 method: 'POST',

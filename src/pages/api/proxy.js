@@ -1,3 +1,5 @@
+import { QueryStartAtConstraint } from "firebase/firestore";
+
 const NOTION_API_BASE_URL = 'https://api.notion.com/v1/';
 
 /**
@@ -113,8 +115,25 @@ async function notionQueryProxy(query) {
 
     if(!query.body.filter){
       query.body = {};
+    }else{
+      query.body.query = undefined;
     }
-    const notionApiUrl = new URL(parameters.endpoint, NOTION_API_BASE_URL);
+
+    let notionApiUrl;
+
+    switch(parameters.searchType){
+      case "DATABASE":
+        notionApiUrl = new URL(parameters.endpoint, NOTION_API_BASE_URL);
+        break;
+
+      case "CONTENT":
+        notionApiUrl = new URL(`databases/${parameters.dbId}/query`, NOTION_API_BASE_URL);
+        break;
+        
+      default:
+        notionApiUrl = new URL(parameters.endpoint, NOTION_API_BASE_URL);
+    }
+
     const options = {
       method: 'POST',
       headers: {
@@ -124,10 +143,13 @@ async function notionQueryProxy(query) {
       },
       body: JSON.stringify(query.body)
     };
+    console.log(parameters);
     console.log(options);
+    console.log(notionApiUrl.toString());
+
     const notionResponse = await fetch(notionApiUrl.toString(), options);
     const data = await notionResponse.json();
-
+    console.log(data);
     return new Response(JSON.stringify(data), {
       status: notionResponse.status,
       headers: { 'Content-Type': 'application/json' }

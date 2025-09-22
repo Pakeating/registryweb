@@ -8,6 +8,8 @@ export async function checkNotionDB(dbName, apiKey){
     try {
             let queryBody = createDbIdQueryBody();
             queryBody.parameters.apiKey = apiKey;
+            queryBody.parameters.searchType = "DATABASE";
+
             queryBody.body.query = dbName;
 
             proxyResponse = await fetch(`/api/proxy`, {
@@ -74,7 +76,7 @@ export async function getNotionCredentials() {
             throw new Error("No se pudieron obtener las credenciales de Notion (API Key o DB ID). Revisa tu configuración de perfil.");
         }
 
-        return { apiKey, dbName: dbName };
+        return { apiKey, dbName };
 
     } catch (error) {
         console.error("Error crítico al obtener credenciales de Notion:", error);

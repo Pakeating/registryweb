@@ -8,7 +8,8 @@ export function createQueryBody() {
       endpoint: "search",
       apiKey: "",
       dbId: "",
-      storageOption: "NOTION"
+      storageOption: "NOTION",
+      searchType: ""
     },
     body: {
       query: "",
