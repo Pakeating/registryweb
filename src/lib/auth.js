@@ -96,7 +96,7 @@ export async function initializeAuth() {
             }
         } else {
             console.log("Usuario no autenticado, redirigiendo a inicio...");
-            window.location.href = '/';
+            window.location.href = '/loginPage';
         }
     });
 }

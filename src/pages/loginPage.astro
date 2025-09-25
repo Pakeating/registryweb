@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Login from '../components/Login.astro';
+---
+
+<Layout title="Meal Tracker - Login">
+	<main class="login-container">
+		<Login />
+	</main>
+</Layout>
+
+<style>
+	.login-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		min-height: calc(100vh - 4.5rem); /* Resta la altura del header */
+		padding: 1rem;
+		box-sizing: border-box;
+	}
+
+    /* Ajuste para móviles para que no se vea tan pegado arriba */
+    @media (max-width: 640px) {
+        .login-container {
+            padding-top: 2rem;
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<script>
+    import { auth } from "../firebase/config";
+    import { onAuthStateChanged } from "firebase/auth";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = '/';
+            }
+        });
+    });
+</script>

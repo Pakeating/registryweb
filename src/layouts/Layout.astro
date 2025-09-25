@@ -61,25 +61,18 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
 		<slot />
     <FeedbackIcon />
     <script>
-        import { registerSW } from 'virtual:pwa-register';
         import { auth } from '../firebase/config.ts';
         import { onAuthStateChanged } from "firebase/auth";
-
-        registerSW({
-            onOfflineReady() {
-                console.log("La aplicación está lista para funcionar sin conexión.");
-            },
-        });
 
         // --- AUTHENTICATION GATE ---
         // Se ejecuta en el cliente para todas las páginas que usen este Layout.
         // Si el usuario no está en la página de login y no está autenticado,
         // se le redirige al login.
-        if (window.location.pathname !== '/') {
+        if (window.location.pathname !== '/loginPage') {
             onAuthStateChanged(auth, (user) => {
                 if (!user) {
                     console.log('Usuario no autenticado. Redirigiendo a /');
-                    window.location.href = '/';
+                    window.location.href = '/loginPage';
                 }
             });
         }

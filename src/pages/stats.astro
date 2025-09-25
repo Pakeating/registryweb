@@ -5,19 +5,6 @@ import StatsDashboard from '../components/StatsDashboard.astro';
 
 <Layout title="Estadísticas">
     <main class="stats-container">
-        <h1 class="stats-title">Tu Progreso y Estadísticas</h1>
-        
-        <p class="stats-description">
-            Visualiza tus datos de comidas a lo largo del tiempo. Selecciona un rango de fechas para generar los gráficos correspondientes.
-        </p>
-
-        <!-- 
-            Aquí está la magia de Astro Islands:
-            - Importamos el componente StatsDashboard.
-            - Usamos `client:load` para decirle a Astro que este componente 
-              necesita JavaScript y debe ejecutarse en el navegador tan pronto
-              como la página cargue.
-        -->
         <StatsDashboard />
 
     </main>

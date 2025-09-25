@@ -1,19 +1,20 @@
 ---
 // Componente isla para el panel de estadísticas con vista de tabla y gráficos.
+import StatsSummary from "./StatsSummary.astro";
 ---
+
 <div class="stats-dashboard">
     <div class="card">
         <h2 class="title">Análisis de Picoteos</h2>
-        
+
         <div class="controls-container">
             <div class="control-group">
                 <label for="dateRangeSelector">Rango de Fechas</label>
                 <select id="dateRangeSelector" class="select">
                     <option value="all">Desde el inicio</option>
-                    <option value="week">Última semana</option>
+                    <option value="week" selected>Esta semana</option>
                     <option value="month">Último mes</option>
-                    <option value="today" selected>Hoy</option>
-                    
+                    <option value="today">Hoy</option>
                 </select>
             </div>
             <div class="control-group">
@@ -23,13 +24,19 @@
                     <option value="table">Tabla de Datos</option>
                     <option value="history">Solo Histórico</option>
                     <option value="type">Solo Tipos</option>
-                    <option value="heatmap" disabled>Mapa de Calor (Próximamente)</option>
+                    <option value="heatmap" disabled
+                        >Mapa de Calor (Próximamente)</option
+                    >
                 </select>
             </div>
             <button id="fetchData" class="btn">Generar Vista</button>
         </div>
 
-        <div id="loading" class="loading-indicator" style="display: none;">Cargando...</div>
+        <div id="loading" class="loading-indicator" style="display: none;">
+            Cargando...
+        </div>
+
+        <StatsSummary />
 
         <div class="charts-grid" id="chartsView">
             <div id="historyChartContainer" class="chart-container">
@@ -67,43 +74,38 @@
 
 <style>
     .stats-dashboard .card {
-        background-color: #FFFFFF;
+        background-color: #ffffff;
         padding: 1.5rem;
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-        color: #1C1917;
+        color: #1c1917;
     }
-
     .title {
         text-align: center;
         font-size: 1.75rem;
         margin-bottom: 2rem;
         font-weight: 600;
     }
-
     .controls-container {
         display: flex;
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 2rem;
     }
-
     .control-group {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
     }
-
     .control-group label {
         font-size: 0.9rem;
-        color: #57534E;
+        color: #57534e;
     }
-
     .select {
         width: 100%;
-        background-color: #FFFFFF;
-        border: 1px solid #D4D4D8;
-        color: #1C1917;
+        background-color: #ffffff;
+        border: 1px solid #d4d4d8;
+        color: #1c1917;
         padding: 0.75rem;
         border-radius: 6px;
         font-family: inherit;
@@ -115,165 +117,145 @@
         background-size: 1.5em 1.5em;
         padding-right: 2.5rem;
     }
-
     .btn {
         width: 100%;
         padding: 0.75rem 1.5rem;
-        background-color: #1C1917;
-        color: #FFFFFF;
+        background-color: #1c1917;
+        color: #ffffff;
         border: none;
         border-radius: 6px;
         cursor: pointer;
         transition: background-color 0.2s;
         white-space: nowrap;
     }
-
     .btn:hover:not(:disabled) {
         background-color: #3a3533;
     }
-
     .btn:disabled {
-        background-color: #A8A29E;
+        background-color: #a8a29e;
         cursor: not-allowed;
     }
-
     .loading-indicator {
         text-align: center;
         margin: 2rem 0;
         font-size: 1.2rem;
-        color: #1C1917;
+        color: #1c1917;
     }
-    
     .hidden {
         display: none;
     }
-    
     .charts-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 2rem;
     }
-
     .chart-container {
-        background-color: #F5F5F4;
+        background-color: #f5f5f4;
         padding: 1.5rem;
         border-radius: 8px;
         overflow: hidden;
     }
-
     .chart-wrapper {
         position: relative;
         height: 300px;
         max-width: 100%;
     }
-
     .chart-container h3 {
         text-align: center;
         margin-bottom: 1rem;
         font-weight: 600;
-        color: #1C1917;
+        color: #1c1917;
     }
-
     .table-container {
-        background-color: #F5F5F4;
+        background-color: #f5f5f4;
         padding: 1.5rem;
         border-radius: 8px;
         overflow: hidden;
     }
-
     .table-container h3 {
         text-align: center;
         margin-bottom: 1rem;
         font-weight: 600;
-        color: #1C1917;
+        color: #1c1917;
     }
-
     .table-wrapper {
         overflow-x: auto;
     }
-
     table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.9rem;
     }
-
-    th, td {
+    th,
+    td {
         padding: 0.75rem 1rem;
         text-align: left;
-        border-bottom: 1px solid #D4D4D8;
+        border-bottom: 1px solid #d4d4d8;
     }
-
     th {
-        background-color: #FFFFFF;
+        background-color: #ffffff;
         font-weight: 600;
     }
-
     tbody tr:last-child td {
         border-bottom: none;
     }
-
     tbody tr:nth-child(even) {
-        background-color: #FFFFFF;
+        background-color: #ffffff;
     }
-
-    /* --- Media Queries para Responsive Design --- */
-
     @media (min-width: 768px) {
         .controls-container {
             flex-direction: row;
             justify-content: center;
             align-items: flex-end;
         }
-
         .control-group {
             flex-grow: 1;
         }
-
         .btn {
             width: auto;
             flex-shrink: 0;
         }
     }
-
-    /* En pantallas grandes, usamos dos columnas para los gráficos */
     @media (min-width: 1024px) {
         .charts-grid.summary-view {
             grid-template-columns: repeat(2, 1fr);
         }
     }
-
 </style>
 
 <script>
-    import Chart from 'chart.js/auto';
-    import { createQueryBody } from '../lib/objects';
-    import { getNotionCredentials, checkNotionDB } from '../lib/notionUtils.js';
+    import Chart from "chart.js/auto";
+    import { createQueryBody } from "../lib/objects";
+    import { getNotionCredentials, checkNotionDB } from "../lib/notionUtils.js";
 
-    // 1. CONFIGURACIÓN Y REFERENCIAS AL DOM
-    const themeColors = { text: '#1C1917', secondary: '#D4D4D8', background: '#F5F5F4', social: '#36a2eb', planned: '#4bc0c0', unplanned: '#ffcd56' };
-    const dateRangeSelector = document.getElementById('dateRangeSelector');
-    const viewSelector = document.getElementById('viewSelector');
-    const fetchDataButton = document.getElementById('fetchData');
-    const loadingIndicator = document.getElementById('loading');
-    
-    const chartsView = document.getElementById('chartsView');
-    const tableView = document.getElementById('tableView');
-    const historyContainer = document.getElementById('historyChartContainer');
-    const typeContainer = document.getElementById('typeChartContainer');
-    const dataTableBody = document.getElementById('dataTableBody');
+    const themeColors = {
+        text: "#1C1917",
+        secondary: "#D4D4D8",
+        background: "#F5F5F4",
+        social: "#e6c300",
+        planned: "#73d196",
+        unplanned: "#f08080",
+    };
 
-    const historyCtx = document.getElementById('historyChart')?.getContext('2d');
-    const typeCtx = document.getElementById('typeChart')?.getContext('2d');
+    const dateRangeSelector = document.getElementById("dateRangeSelector");
+    const viewSelector = document.getElementById("viewSelector");
+    const fetchDataButton = document.getElementById("fetchData");
+    const loadingIndicator = document.getElementById("loading");
+    const chartsView = document.getElementById("chartsView");
+    const tableView = document.getElementById("tableView");
+    const historyContainer = document.getElementById("historyChartContainer");
+    const typeContainer = document.getElementById("typeChartContainer");
+    const dataTableBody = document.getElementById("dataTableBody");
+    const historyCtx = document
+        .getElementById("historyChart")
+        ?.getContext("2d");
+    const typeCtx = document.getElementById("typeChart")?.getContext("2d");
 
     let historyChartInstance, typeChartInstance;
 
-    // 2. FLUJO PRINCIPAL Y EVENT LISTENERS
-    document.addEventListener('DOMContentLoaded', initializeComponent);
-    fetchDataButton?.addEventListener('click', handleGenerateView);
-    viewSelector?.addEventListener('change', handleViewChange);
-
-    // 3. FUNCIONES DE LÓGICA
+    document.addEventListener("DOMContentLoaded", initializeComponent);
+    fetchDataButton?.addEventListener("click", handleGenerateView);
+    viewSelector?.addEventListener("change", handleViewChange);
 
     function initializeComponent() {
         updateViewVisibility();
@@ -281,34 +263,46 @@
 
     async function handleGenerateView() {
         updateViewVisibility();
-        const { startDate, endDate } = getDateRange();
-        
+        const { startDate } = getDateRange();
+
         try {
-            const rawData = await fetchData(startDate, endDate);
+            const rawData = await fetchData(startDate);
             let data = transformNotionData(rawData);
-
-            // Filtrar los datos para excluir registros sin categoría.
-            data = data.filter(item => item.category && item.category !== '');
-
-            // Ordenar los datos por fecha de consumo (más recientes primero).
-            if (data.length > 0) {
-                data.sort((a, b) => new Date(b.consumptionDate) - new Date(a.consumptionDate));
-            }
+            data = data.filter((item) => item.category && item.category !== "");
 
             if (data.length > 0) {
-                if (!chartsView.classList.contains('hidden')) {
-                    // Para el gráfico, necesitamos los datos en orden cronológico ascendente.
-                    const chartData = [...data].sort((a, b) => new Date(a.consumptionDate) - new Date(b.consumptionDate));
-                    if (!historyContainer.classList.contains('hidden')) renderHistoryChart(chartData);
-                    if (!typeContainer.classList.contains('hidden')) renderTypeChart(data); // El orden no importa para el gráfico de tipos
+                data.sort(
+                    (a, b) =>
+                        new Date(b.consumptionDate) -
+                        new Date(a.consumptionDate),
+                );
+                const chartData = [...data].sort(
+                    (a, b) =>
+                        new Date(a.consumptionDate) -
+                        new Date(b.consumptionDate),
+                );
+
+                if (!chartsView.classList.contains("hidden")) {
+                    if (!historyContainer.classList.contains("hidden"))
+                        renderHistoryChart(chartData);
+                    if (!typeContainer.classList.contains("hidden"))
+                        renderTypeChart(data);
                 }
-                if (!tableView.classList.contains('hidden')) {
-                    renderTable(data); // Usa los datos ya ordenados de forma descendente
+                if (!tableView.classList.contains("hidden")) {
+                    renderTable(data);
                 }
+
+                calculateAndRenderSummary(data);
             } else {
                 if (historyChartInstance) historyChartInstance.destroy();
                 if (typeChartInstance) typeChartInstance.destroy();
-                if (dataTableBody) dataTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay datos para el rango seleccionado.</td></tr>';
+                if (dataTableBody)
+                    dataTableBody.innerHTML =
+                        '<tr><td colspan="4">No hay datos.</td></tr>';
+                const statsSummaryContainer =
+                    document.getElementById("statsSummary");
+                if (statsSummaryContainer)
+                    statsSummaryContainer.classList.add("hidden");
             }
         } catch (error) {
             console.error("Error al generar la vista:", error);
@@ -317,139 +311,218 @@
         }
     }
 
+    function calculateAndRenderSummary(data) {
+        const statsSummaryContainer = document.getElementById("statsSummary");
+        if (!statsSummaryContainer) return;
+
+        const snacks = data.filter((d) => d.category.includes("Picoteo"));
+        if (snacks.length === 0) {
+            statsSummaryContainer.classList.add("hidden");
+            return;
+        }
+
+        // --- CÁLCULO MEDIA GENERAL (CORREGIDO) ---
+        const uniqueSnackDays = new Set(
+            snacks.map((s) => s.consumptionDate.slice(0, 10)),
+        );
+        const numberOfDaysWithSnacks = uniqueSnackDays.size;
+        const avgSnacks =
+            numberOfDaysWithSnacks > 0
+                ? (snacks.length / numberOfDaysWithSnacks).toFixed(1)
+                : "0.0";
+
+        // --- CÁLCULO RATIO ---
+        const socialCount = snacks.filter(
+            (s) => s.category === "Picoteo Social",
+        ).length;
+        const normalCount = snacks.filter(
+            (s) => s.category === "Picoteo",
+        ).length;
+        const snackRatio =
+            snacks.length > 0
+                ? `${((normalCount / snacks.length) * 100).toFixed(0)}% / ${((socialCount / snacks.length) * 100).toFixed(0)}%`
+                : "--";
+
+        // --- CÁLCULO HORA PICO ---
+        const hours = snacks.map((s) => new Date(s.consumptionDate).getHours());
+        const hourCounts = hours.reduce((acc, hour) => {
+            acc[hour] = (acc[hour] || 0) + 1;
+            return acc;
+        }, {});
+        let peakHoursFormatted = "--";
+        if (Object.keys(hourCounts).length > 0) {
+            const peakHour = Object.keys(hourCounts).reduce((a, b) =>
+                hourCounts[a] > hourCounts[b] ? a : b,
+            );
+            peakHoursFormatted = `${peakHour}h-${parseInt(peakHour) + 1}h`;
+        }
+
+        // --- ACTUALIZAR DOM ---
+        document.getElementById("avgSnacks").textContent = avgSnacks || "--";
+        document.getElementById("snackRatio").textContent = snackRatio;
+        document.getElementById("peakHours").textContent = peakHoursFormatted;
+        statsSummaryContainer.classList.remove("hidden");
+    }
+
     function handleViewChange() {
         updateViewVisibility();
     }
 
     function transformNotionData(notionPages) {
         if (!Array.isArray(notionPages)) return [];
-        return notionPages.map(page => {
+        return notionPages.map((page) => {
             const props = page.properties;
             return {
-                name: props['Nombre']?.title[0]?.plain_text ?? 'Sin nombre',
-                consumptionDate: props['Fecha de Consumo']?.date?.start ?? page.created_time,
-                category: props['Categoria de Comida']?.select?.name ?? '',
-                notes: props['Observaciones']?.rich_text[0]?.plain_text ?? ''
+                name: props["Nombre"]?.title[0]?.plain_text ?? "Sin nombre",
+                consumptionDate:
+                    props["Fecha de Consumo"]?.date?.start ?? page.created_time,
+                category: props["Categoria de Comida"]?.select?.name ?? "",
+                notes: props["Observaciones"]?.rich_text[0]?.plain_text ?? "",
             };
         });
     }
-
-    async function fetchData(startDate, endDate) {
+    async function fetchData(startDate) {
         toggleLoading(true);
         try {
             const { apiKey, dbName } = await getNotionCredentials();
             const query = createQueryBody();
-
             query.parameters.apiKey = apiKey;
             query.parameters.dbId = await checkNotionDB(dbName, apiKey);
-            query.parameters.searchType = 'CONTENT';
-            // query.body.filter = '';
+            query.parameters.searchType = "CONTENT";
             query.body.filter = {
-                        property: 'Fecha de Consumo',
-                        date: {
-                            on_or_after: startDate
-                        }
-                    };
-            console.log(query);
-
-            const response = await fetch('/api/proxy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                property: "Fecha de Consumo",
+                date: { on_or_after: startDate },
+            };
+            const response = await fetch("/api/proxy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(query),
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'El backend falló al recuperar los datos.');
+                throw new Error(errorData.message || "Fallo en el backend.");
             }
-            
             const data = await response.json();
             return data.results || [];
-
         } catch (error) {
             throw error;
         } finally {
             toggleLoading(false);
         }
     }
-
-    // 4. FUNCIONES DE RENDERIZADO
-
     function updateViewVisibility() {
         const selection = viewSelector.value;
-        chartsView.classList.add('hidden');
-        tableView.classList.add('hidden');
-        historyContainer.classList.add('hidden');
-        typeContainer.classList.add('hidden');
-        chartsView.classList.remove('summary-view');
-
-        if (selection === 'summary') {
-            chartsView.classList.remove('hidden');
-            historyContainer.classList.remove('hidden');
-            typeContainer.classList.remove('hidden');
-            chartsView.classList.add('summary-view');
-        } else if (selection === 'table') {
-            tableView.classList.remove('hidden');
-        } else if (selection === 'history') {
-            chartsView.classList.remove('hidden');
-            historyContainer.classList.remove('hidden');
-        } else if (selection === 'type') {
-            chartsView.classList.remove('hidden');
-            typeContainer.classList.remove('hidden');
+        chartsView.classList.add("hidden");
+        tableView.classList.add("hidden");
+        historyContainer.classList.add("hidden");
+        typeContainer.classList.add("hidden");
+        chartsView.classList.remove("summary-view");
+        if (selection === "summary") {
+            chartsView.classList.remove("hidden");
+            historyContainer.classList.remove("hidden");
+            typeContainer.classList.remove("hidden");
+            chartsView.classList.add("summary-view");
+        } else if (selection === "table") {
+            tableView.classList.remove("hidden");
+        } else if (selection === "history") {
+            chartsView.classList.remove("hidden");
+            historyContainer.classList.remove("hidden");
+        } else if (selection === "type") {
+            chartsView.classList.remove("hidden");
+            typeContainer.classList.remove("hidden");
         }
     }
-    
     function renderTable(data) {
         if (!dataTableBody) return;
-        dataTableBody.innerHTML = '';
-
-        data.forEach(item => {
-            const row = document.createElement('tr');
-            const date = new Date(item.consumptionDate).toLocaleString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            
+        dataTableBody.innerHTML = "";
+        data.forEach((item) => {
+            const row = document.createElement("tr");
+            const date = new Date(item.consumptionDate).toLocaleString(
+                "es-ES",
+                {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                },
+            );
             row.innerHTML = `<td>${item.name}</td><td>${date}</td><td>${item.category}</td><td>${item.notes}</td>`;
             dataTableBody.appendChild(row);
         });
     }
-
     function renderHistoryChart(data) {
         if (historyChartInstance) historyChartInstance.destroy();
         if (!historyCtx) return;
-
-        const filteredData = data.filter(item => item.category !== 'Comida Planificada');
-
-        const countsByDate = filteredData.reduce((acc, item) => {
+        const picoteosData = data.filter(
+            (item) => item.category !== "Comida Planificada",
+        );
+        const plannedData = data.filter(
+            (item) => item.category === "Comida Planificada",
+        );
+        const picoteosCountsByDate = picoteosData.reduce((acc, item) => {
             const dateKey = item.consumptionDate.slice(0, 10);
             acc[dateKey] = (acc[dateKey] || 0) + 1;
             return acc;
         }, {});
-
-        const sortedDateKeys = Object.keys(countsByDate).sort();
-
-        const chartLabels = sortedDateKeys.map(key => {
-            const [year, month, day] = key.split('-');
-            return `${day}/${month}`;
+        const plannedCountsByDate = plannedData.reduce((acc, item) => {
+            const dateKey = item.consumptionDate.slice(0, 10);
+            acc[dateKey] = (acc[dateKey] || 0) + 1;
+            return acc;
+        }, {});
+        const allDateKeys = [
+            ...new Set([
+                ...Object.keys(picoteosCountsByDate),
+                ...Object.keys(plannedCountsByDate),
+            ]),
+        ].sort();
+        const chartLabels = allDateKeys.map((key) => {
+            const [y, m, d] = key.split("-");
+            return `${d}/${m}`;
         });
-
-        const chartData = sortedDateKeys.map(key => countsByDate[key]);
-
+        const picoteosChartData = allDateKeys.map(
+            (key) => picoteosCountsByDate[key] || 0,
+        );
+        const plannedChartData = allDateKeys.map(
+            (key) => plannedCountsByDate[key] || 0,
+        );
+        const totalChartData = allDateKeys.map(
+            (key, i) => picoteosChartData[i] + plannedChartData[i],
+        );
         historyChartInstance = new Chart(historyCtx, {
-            type: 'line',
+            type: "line",
             data: {
                 labels: chartLabels,
-                datasets: [{
-                    label: 'Número de Picoteos',
-                    data: chartData,
-                    borderColor: '#1C1917',
-                    backgroundColor: 'rgba(28, 25, 23, 0.1)',
-                    tension: 0.1,
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: "Picoteos",
+                        data: picoteosChartData,
+                        borderColor: themeColors.unplanned,
+                        backgroundColor: "rgba(240, 128, 128, 0.1)",
+                        tension: 0.1,
+                        fill: true,
+                    },
+                    // {
+                    //     label: "Planificada",
+                    //     data: plannedData,
+                    //     borderColor: themeColors.planned,
+                    //     backgroundColor: "rgba(115, 209, 150, 0.1)",
+                    //     tension: 0.1,
+                    //     fill: true,
+                    // },
+                    {
+                        label: "Total",
+                        data: totalChartData,
+                        borderColor: "rgba(135, 206, 235, 1)",
+                        tension: 0.1,
+                        fill: false,
+                        borderDash: [5, 5],
+                    },
+                ],
             },
-            options: chartOptions()
+            options: chartOptions(),
         });
     }
-
     function renderTypeChart(data) {
         if (typeChartInstance) typeChartInstance.destroy();
         if (!typeCtx) return;
@@ -458,57 +531,86 @@
             acc[type] = (acc[type] || 0) + 1;
             return acc;
         }, {});
-        const labels = ['Picoteo Social', 'Comida Planificada', 'Picoteo'];
-        const chartData = labels.map(label => typeCounts[label] || 0);
-        typeChartInstance = new Chart(typeCtx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: chartData, backgroundColor: [themeColors.social, themeColors.planned, themeColors.unplanned], borderColor: themeColors.background, borderWidth: 4 }] }, options: chartOptions(true) });
+        const labels = ["Picoteo Social", "Comida Planificada", "Picoteo"];
+        const chartData = labels.map((label) => typeCounts[label] || 0);
+        typeChartInstance = new Chart(typeCtx, {
+            type: "doughnut",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        data: chartData,
+                        backgroundColor: [
+                            themeColors.social,
+                            themeColors.planned,
+                            themeColors.unplanned,
+                        ],
+                        borderColor: themeColors.background,
+                        borderWidth: 4,
+                    },
+                ],
+            },
+            options: chartOptions(true),
+        });
     }
-
-    // 5. FUNCIONES AUXILIARES
-
     function getDateRange() {
         const selected = dateRangeSelector.value;
         const now = new Date();
         let startDate = new Date();
 
         switch (selected) {
-            case 'today':
+            case "today":
                 startDate.setHours(0, 0, 0, 0);
-                return { startDate: startDate.toISOString(), endDate: now.toISOString() };
-            case 'week':
-                startDate.setDate(now.getDate() - 7);
                 break;
-            case 'month':
+            case "week":
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+                startDate = new Date(now.setDate(diff));
+                startDate.setHours(0, 0, 0, 0);
+                break;
+            case "month":
                 startDate.setMonth(now.getMonth() - 1);
                 break;
-            case 'all':
-                startDate = new Date(0); // Epoch
+            case "all":
+                startDate = new Date(0);
                 break;
         }
-         return { startDate: startDate.toISOString(), endDate: now.toISOString() };
+        return {
+            startDate: startDate.toISOString(),
+            endDate: now.toISOString(),
+        };
     }
-
     function toggleLoading(isLoading) {
-        loadingIndicator.style.display = isLoading ? 'block' : 'none';
-        fetchDataButton.disabled = isLoading;
+        if (fetchDataButton) fetchDataButton.disabled = isLoading;
+        if (loadingIndicator)
+            loadingIndicator.style.display = isLoading ? "block" : "none";
     }
-
     const chartOptions = (isDoughnut = false) => ({
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: isDoughnut ? 'top' : 'bottom', labels: { color: themeColors.text } } },
-        scales: isDoughnut ? {} : {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    color: themeColors.text,
-                    callback: function(value) {
-                        if (Number.isInteger(value)) {
-                            return value;
-                        }
-                    },
-                },
-                grid: { color: themeColors.secondary }
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: isDoughnut ? "top" : "bottom",
+                labels: { color: themeColors.text },
             },
-            x: { ticks: { color: themeColors.text }, grid: { color: themeColors.secondary } }
-        }
+        },
+        scales: isDoughnut
+            ? {}
+            : {
+                  y: {
+                      beginAtZero: true,
+                      ticks: {
+                          color: themeColors.text,
+                          callback: function (v) {
+                              if (Number.isInteger(v)) return v;
+                          },
+                      },
+                      grid: { color: themeColors.secondary },
+                  },
+                  x: {
+                      ticks: { color: themeColors.text },
+                      grid: { color: themeColors.secondary },
+                  },
+              },
     });
 </script>
