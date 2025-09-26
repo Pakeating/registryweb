@@ -93,7 +93,8 @@ async function handleSync() {
  * NÚCLEO DEL SERVICE WORKER
  * ====================================================================================
  */
-const CACHE_NAME = 'static-cache-v7'; 
+const STATIC_CACHE_NAME = 'static-cache-v9';
+const DYNAMIC_CACHE_NAME = 'dynamic-cache-v9';
 const ASSETS_TO_CACHE = [
     '/',
     '/loginPage',
@@ -107,7 +108,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', event => {
     console.log('[Service Worker] Instalando...');
     event.waitUntil(
-        caches.open(CACHE_NAME)
+        caches.open(STATIC_CACHE_NAME)
             .then(cache => {
                 console.log('[Service Worker] Pre-cacheando assets críticos.');
                 return cache.addAll(ASSETS_TO_CACHE);
@@ -118,13 +119,14 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
     console.log('[Service Worker] Activando...');
+    const cacheWhitelist = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME];
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
-                cacheNames.map(cache => {
-                    if (cache !== CACHE_NAME) {
-                        console.log('[Service Worker] Borrando caché antigua:', cache);
-                        return caches.delete(cache);
+                cacheNames.map(cacheName => {
+                    if (!cacheWhitelist.includes(cacheName)) {
+                        console.log('[Service Worker] Borrando caché antigua:', cacheName);
+                        return caches.delete(cacheName);
                     }
                 })
             );
@@ -140,44 +142,70 @@ self.addEventListener('sync', event => {
 
 self.addEventListener('fetch', event => {
     const { request } = event;
+    const url = new URL(request.url);
 
-    // Estrategia para peticiones POST a la API (Offline First)
-    if (request.method === 'PATCH' && request.url.includes('/api/')) {
-        return event.respondWith(
-            fetch(request.clone()).catch(async () => {
-                console.log('[Service Worker] Petición POST fallida. Guardando para sincronización.');
-                const body = await request.clone().json();
-                const requestData = { 
-                    url: request.url, 
-                    method: request.method, 
-                    headers: Object.fromEntries(request.headers.entries()), 
-                    body: JSON.stringify(body) 
-                };
-                await saveRequest(requestData);
-                return new Response(JSON.stringify({ message: 'La petición fue encolada.' }), { status: 202, headers: { 'Content-Type': 'application/json' } });
-            })
-        );
+    if (url.pathname.startsWith('/api/proxy')) {
+        if (request.method === 'POST') {
+            return event.respondWith((async () => {
+                try {
+                    const requestBody = await request.clone().json();
+                    if (requestBody.parameters?.searchType === 'DATABASE') {
+                        const cacheKey = 'database-id-cache-key';
+                        const cache = await caches.open(DYNAMIC_CACHE_NAME);
+
+                        try {
+                            const networkResponse = await fetch(request.clone());
+                            console.log('[SW] Búsqueda de DB ID: Obtenido de la red.');
+                            if (networkResponse.ok) {
+                                console.log('[SW] Búsqueda de DB ID: Respuesta guardada en caché.');
+                                cache.put(cacheKey, networkResponse.clone());
+                            }
+                            return networkResponse;
+                        } catch (error) {
+                            console.log('[SW] Búsqueda de DB ID: Falló la red, intentando desde caché.');
+                            const cachedResponse = await cache.match(cacheKey);
+                             if (cachedResponse) {
+                                console.log('[SW] Búsqueda de DB ID: Servido desde caché.');
+                                return cachedResponse;
+                            }
+                            return new Response(JSON.stringify({ message: "Offline y la DB ID no estaba en caché." }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+                        }
+                    }
+                } catch (err) {
+                    // Not a JSON body, so we assume it's a meal submission.
+                }
+
+                // Fallback for other POST requests (meal submission)
+                return fetch(request.clone()).catch(async () => {
+                    console.log('[SW] Petición POST (registro de comida) fallida. Guardando para sincronización.');
+                    const body = await request.clone().json();
+                    await saveRequest({ url: request.url, method: request.method, headers: Object.fromEntries(request.headers.entries()), body: JSON.stringify(body) });
+                    return new Response(JSON.stringify({ message: 'La petición fue encolada.' }), { status: 202, headers: { 'Content-Type': 'application/json' } });
+                });
+            })());
+        }
+
+        if (request.method === 'PATCH') {
+            return event.respondWith(
+                fetch(request.clone()).catch(async () => {
+                    console.log('[SW] Petición PATCH fallida. Guardando para sincronización.');
+                    const body = await request.clone().json();
+                    await saveRequest({ url: request.url, method: request.method, headers: Object.fromEntries(request.headers.entries()), body: JSON.stringify(body) });
+                    return new Response(JSON.stringify({ message: 'La petición fue encolada.' }), { status: 202, headers: { 'Content-Type': 'application/json' } });
+                })
+            );
+        }
     }
 
-    // Ignorar otras peticiones a la API que no sean POST
-    if (request.url.includes('/api/')) {
-        return;
-    }
-    
-    // Estrategia "Network First, fallback to Cache" para todo lo demás (GET)
     if (request.method === 'GET') {
         event.respondWith(
-            caches.open(CACHE_NAME).then(cache => {
+            caches.open(STATIC_CACHE_NAME).then(cache => {
                 return fetch(request).then(networkResponse => {
-                    // Si la petición de red fue exitosa, la guardamos en caché para el futuro
-                    if (networkResponse && networkResponse.ok) {
+                    if (networkResponse && networkResponse.ok && url.origin === self.location.origin) {
                         cache.put(request, networkResponse.clone());
                     }
                     return networkResponse;
-                }).catch(() => {
-                    // Si la petición de red falla (estamos offline), intentamos servir desde la caché
-                    return cache.match(request);
-                });
+                }).catch(() => cache.match(request));
             })
         );
     }
