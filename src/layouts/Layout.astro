@@ -1,8 +1,8 @@
 ---
 import Navbar from '../components/Navbar.astro';
-import FeedbackIcon from '../components/FeedbackIcon.astro'; // Importamos el nuevo componente
+import FeedbackIcon from '../components/FeedbackIcon.astro';
+import '../styles/global.css'; // <-- CORRECCIÓN: Importación directa de los estilos globales
 
-// Original manifest with relative paths
 const manifest = {
   name: 'Registro de Comidas',
   short_name: 'Comidas',
@@ -13,33 +13,19 @@ const manifest = {
   theme_color: '#F5F5F4',
   background_color: '#F5F5F4',
   icons: [
-    {
-      src: '/icons/icon-192x192.svg',
-      sizes: '192x192',
-      type: 'image/svg+xml'
-    },
-    {
-      src: '/icons/icon-512x512.svg',
-      sizes: '512x512',
-      type: 'image/svg+xml',
-      purpose: 'any maskable'
-    }
+    { src: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+    { src: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
   ]
 };
 
-// Create a new manifest with absolute URLs for all relevant properties.
 const siteUrl = Astro.url.origin;
 const manifestWithAbsoluteUrls = {
   ...manifest,
   start_url: `${siteUrl}${manifest.start_url}`,
   scope: `${siteUrl}${manifest.scope}`,
-  icons: manifest.icons.map(icon => ({
-    ...icon,
-    src: `${siteUrl}${icon.src}`
-  }))
+  icons: manifest.icons.map(icon => ({ ...icon, src: `${siteUrl}${icon.src}` }))
 };
 
-// Encode the manifest, replacing '#' with its URL-safe equivalent '%23'
 const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '%23');
 ---
 <!doctype html>
@@ -52,32 +38,46 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
 		<title>RegistryWeb</title>
     <link rel="manifest" href={`data:application/manifest+json,${encodedManifest}`} />
     <meta name="theme-color" content={manifest.theme_color} />
-    <style is:global>
-        @import '../styles/global.css';
-    </style>
 	</head>
 	<body>
     <Navbar />
 		<slot />
     <FeedbackIcon />
+
     <script>
+        // --- IMPORTACIONES (DEBEN ESTAR AL PRINCIPIO) ---
         import { auth } from '../firebase/config.ts';
         import { onAuthStateChanged } from "firebase/auth";
 
-        // --- AUTHENTICATION GATE ---
-        // Se ejecuta en el cliente para todas las páginas que usen este Layout.
-        // Si el usuario no está en la página de login y no está autenticado,
-        // se le redirige al login.
+        // --- GATE DE AUTENTICACIÓN ---
         if (window.location.pathname !== '/loginPage') {
             onAuthStateChanged(auth, (user) => {
                 if (!user) {
-                    console.log('Usuario no autenticado. Redirigiendo a /');
                     window.location.href = '/loginPage';
                 }
             });
         }
+
+        // --- LÓGICA DEL SERVICE WORKER Y OTROS ---
+        window.addEventListener('load', () => {
+            // 1. Registro del Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[Layout] Service Worker registrado.', reg))
+                    .catch(err => console.error('[Layout] Error al registrar Service Worker:', err));
+            }
+
+            // 2. Disparador de Sincronización en Carga de Página
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                navigator.serviceWorker.ready.then(sw => {
+                    sw.sync.register('sync-pending-meals')
+                        .then(() => console.log('[Layout] Sincronización de fondo registrada al cargar la página.'))
+                        .catch(err => console.error('[Layout] No se pudo registrar la sincronización:', err));
+                });
+            }
+        });
         
-        // Health check to "wake up" the serverless backend on page load.
+        // --- HEALTH CHECK DEL BACKEND ---
         (async () => {
             try {
                 const response = await fetch('/api/proxy');
@@ -85,7 +85,7 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
                     console.warn(`Backend health check failed with status: ${response.status}`);
                 }
             } catch (error) {
-                console.error('Error during backend health check:', error);
+                // No hacer nada, ya que esto fallará si estamos offline.
             }
         })();
     </script>
@@ -93,12 +93,11 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
 </html>
 
 <style>
-	html,
-	body {
+	html, body {
 		margin: 0;
 		width: 100%;
 		height: 100%;
-        background-color: #F5F5F4; /* stone-100 */
+        background-color: #F5F5F4; 
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 	}
 </style>

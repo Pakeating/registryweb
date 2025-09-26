@@ -1,4 +1,4 @@
----
+--- 
 import LoadingButton from "./LoadingButton.astro";
 ---
 
@@ -121,14 +121,12 @@ import LoadingButton from "./LoadingButton.astro";
   const form = document.getElementById("meal-form-element");
   const submitButton = document.getElementById("submit-button");
 
+  // --- Funciones de ayuda para el UI (sin cambios) ---
   function setLoading(isLoading) {
     if (!submitButton) return;
-
     const textElement = submitButton.querySelector(".button-text");
     const spinnerElement = submitButton.querySelector(".spinner");
-
     submitButton.disabled = isLoading;
-
     if (isLoading) {
       textElement.classList.add("hidden");
       spinnerElement.classList.remove("hidden");
@@ -149,14 +147,31 @@ import LoadingButton from "./LoadingButton.astro";
       descriptionInput.value = "";
       const now = new Date();
       const timezoneOffset = now.getTimezoneOffset() * 60000;
-      const localISOTime = new Date(now - timezoneOffset)
-        .toISOString()
-        .slice(0, 16);
+      const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
       dateTimeInput.value = localISOTime;
       mealTypeSelect.value = "Comida planificada";
     }
   }
 
+  /**
+   * Registra una tarea de sincronización para que el SW la procese.
+   */
+  async function registerBackgroundSync() {
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      try {
+        const swRegistration = await navigator.serviceWorker.ready;
+        await swRegistration.sync.register('sync-pending-meals');
+        console.log('[MealForm] Tarea de sincronización de fondo registrada.');
+      } catch (error) {
+        console.error('[MealForm] No se pudo registrar la sincronización de fondo:', error);
+      }
+    }
+  }
+
+  /**
+   * Envía los datos del formulario al backend.
+   * Si está sin conexión, el Service Worker interceptará la petición.
+   */
   async function sendToBack(command) {
     try {
       const response = await fetch("/api/proxy", {
@@ -165,46 +180,43 @@ import LoadingButton from "./LoadingButton.astro";
         body: JSON.stringify(command),
       });
 
+      if (response.status === 202) {
+        alert("Estás sin conexión. Tu comida se ha guardado y se enviará cuando recuperes la conexión.");
+        resetForm();
+        return; 
+      }
+      
       if (!response.ok) {
         const errorData = await response.json();
-        const errorMessage =
-          errorData.message || "Error desconocido del servidor.";
-        throw new Error(`Error del backend: ${errorMessage}`);
+        throw new Error(`Error del backend: ${errorData.message || 'Error desconocido'}`);
       }
 
       await response.json();
-      alert("¡Comida registrada con éxito!"); // <-- ALERTA RESTAURADA
+      alert("¡Comida registrada con éxito!");
       resetForm();
+
     } catch (error) {
-      // Lanzamos el error para que sea capturado por el manejador principal
       throw error;
     }
   }
 
+  // --- Event Listener Principal ---
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    // Disparar el evento de feedback visual ANTES de la llamada a la API
+    
+    // ... (código del feedback visual sin cambios) ...
     let feedbackType = "";
     let mealType = (document.getElementById("meal-type") as HTMLSelectElement).value;
-    if (mealType === "Comida planificada") {
-      feedbackType = "success";
-    } else if (mealType === "Picoteo" || mealType === "Picoteo Social") {
-      feedbackType = "error";
-    }
-    if (feedbackType) {
-      const feedbackEvent = new CustomEvent("show-feedback", {
-        detail: { type: feedbackType },
-      });
-      document.dispatchEvent(feedbackEvent);
-    }
+    if (mealType === "Comida planificada") feedbackType = "success";
+    else if (mealType === "Picoteo" || mealType === "Picoteo Social") feedbackType = "error";
+    if (feedbackType) document.dispatchEvent(new CustomEvent("show-feedback", { detail: { type: feedbackType } }));
+
     setLoading(true);
 
     try {
-      // 1. Obtenemos las credenciales con la nueva función centralizada.
       const { apiKey, dbName } = await getNotionCredentials();
       const dbId = await checkNotionDB(dbName, apiKey);
-
-      // 2. Creamos el cuerpo de la petición.
+      
       const commandRequest = createCommandBody();
       commandRequest.parameters.apiKey = apiKey;
       commandRequest.parameters.dbId = dbId;
@@ -217,18 +229,19 @@ import LoadingButton from "./LoadingButton.astro";
       commandRequest.body.mealDescription = (document.getElementById("description") as HTMLInputElement).value;
       commandRequest.body.mealAudit = new Date().toISOString();
 
-      // 3. Enviamos la petición.
+      // Envía la petición (con lógica offline)
       await sendToBack(commandRequest);
+      
+      // Pide al SW que intente sincronizar por si acaso.
+      await registerBackgroundSync();
+
     } catch (error) {
-      // 4. Un único punto para manejar cualquier error del proceso.
-      console.error("Error durante el registro de la comida:", error);
+      console.error("Error durante el registro:", error);
       alert(`Error: ${error.message}`);
     } finally {
-      // 5. Nos aseguramos de que el botón de carga siempre se desactive.
       setLoading(false);
     }
   });
 
-  // Inicializar el formulario con la fecha y hora actuales al cargar la página.
   document.addEventListener("DOMContentLoaded", resetForm);
 </script>
