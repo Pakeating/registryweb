@@ -28,7 +28,7 @@
                 await setPersistence(auth, browserLocalPersistence);
                 const result = await signInWithPopup(auth, provider);
                 console.log("Inicio de sesión exitoso, redirigiendo...", result.user.uid);
-                window.location.href = '/register';
+                window.location.href = '/';
 
             } catch (error) {
                 console.error("Error durante el inicio de sesión con Google:", error);
