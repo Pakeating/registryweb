@@ -93,7 +93,7 @@ async function handleSync() {
  * NÚCLEO DEL SERVICE WORKER
  * ====================================================================================
  */
-const CACHE_NAME = 'static-cache-v6'; // <-- VERSIÓN DE CACHÉ INCREMENTADA A V6
+const CACHE_NAME = 'static-cache-v7'; 
 const ASSETS_TO_CACHE = [
     '/',
     '/loginPage',
@@ -142,12 +142,17 @@ self.addEventListener('fetch', event => {
     const { request } = event;
 
     // Estrategia para peticiones POST a la API (Offline First)
-    if (request.method === 'POST' && request.url.includes('/api/')) {
+    if (request.method === 'PATCH' && request.url.includes('/api/')) {
         return event.respondWith(
             fetch(request.clone()).catch(async () => {
                 console.log('[Service Worker] Petición POST fallida. Guardando para sincronización.');
-                const body = await request.clone().text();
-                const requestData = { url: request.url, method: request.method, headers: Object.fromEntries(request.headers.entries()), body: body };
+                const body = await request.clone().json();
+                const requestData = { 
+                    url: request.url, 
+                    method: request.method, 
+                    headers: Object.fromEntries(request.headers.entries()), 
+                    body: JSON.stringify(body) 
+                };
                 await saveRequest(requestData);
                 return new Response(JSON.stringify({ message: 'La petición fue encolada.' }), { status: 202, headers: { 'Content-Type': 'application/json' } });
             })
