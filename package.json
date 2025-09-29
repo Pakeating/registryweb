@@ -15,7 +15,5 @@
     "chart.js": "^4.5.0",
     "firebase": "^12.2.1"
   },
-  "devDependencies": {
-    "vite-plugin-pwa": "^1.0.3"
-  }
+  "devDependencies": {}
 }
