@@ -66,43 +66,69 @@ async function deleteRequest(id) {
  */
 async function handleSync() {
     console.log('[SyncManager] Evento de sincronización recibido.');
+    let successfulSyncs = 0;
     try {
         const pendingRequests = await getPendingRequests();
         console.log(`[SyncManager] Procesando ${pendingRequests.length} peticiones pendientes.`);
-        for (const req of pendingRequests) {
+        
+        // Usamos Promise.all para procesar todas las peticiones en paralelo
+        await Promise.all(pendingRequests.map(async (req) => {
             try {
                 const response = await fetch(req.url, { method: req.method, headers: req.headers, body: req.body });
                 if (response.ok) {
                     console.log(`[SyncManager] Petición ${req.id} enviada con éxito.`);
                     await deleteRequest(req.id);
+                    successfulSyncs++; // Incrementamos el contador de éxitos
                 } else {
                     console.warn(`[SyncManager] La petición ${req.id} falló con estado ${response.status}. Se elimina para evitar bucles.`);
                     await deleteRequest(req.id);
                 }
             } catch (error) {
                 console.error(`[SyncManager] Error de red al enviar la petición ${req.id}. Se reintentará más tarde.`, error);
+                // No hacemos nada con `successfulSyncs` si falla, para que no cuente
             }
+        }));
+
+        // Si hubo al menos una sincronización exitosa, mostramos la notificación.
+        if (successfulSyncs > 0) {
+
+            const notificationTitle = '¡Sincronización completada!';
+            const notificationOptions = {
+                body: `Se han sincronizado ${successfulSyncs} registro(s) pendientes.`,
+                icon: '/icons/icon192.webp', // Icono para la notificación
+                badge: '/icons/icon192.webp', // Icono para la barra de estado en Android
+                vibrate: [100, 50, 100], // Patrón de vibración
+            };
+            // Mostramos la notificación a través del registro del Service Worker
+            await self.registration.showNotification(notificationTitle, notificationOptions).then(() => {
+                console.log('[SyncManager] Notificación lanzada en segundo plano');
+            })
+            .catch(err => {
+                console.error('[SyncManager] Error al mostrar la notificación en segundo plano:', err);
+            });
         }
+
     } catch (error) {
         console.error('[SyncManager] Error al procesar la cola de peticiones:', error);
     }
 }
+
 
 /*
  * ====================================================================================
  * NÚCLEO DEL SERVICE WORKER
  * ====================================================================================
  */
-const STATIC_CACHE_NAME = 'static-cache-v9';
-const DYNAMIC_CACHE_NAME = 'dynamic-cache-v9';
+const STATIC_CACHE_NAME = 'static-cache-v10';
+const DYNAMIC_CACHE_NAME = 'dynamic-cache-v10';
 const ASSETS_TO_CACHE = [
     '/',
     '/loginPage',
     '/stats',
-    '/favicon.svg',
+    '/favicon.webp',
     '/google.svg',
-    '/icons/icon-192x192.svg',
-    '/icons/icon-512x512.svg'
+    '/icons/icon192.webp',
+    '/icons/icon500.webp'
 ];
 
 self.addEventListener('install', event => {

@@ -61,14 +61,25 @@ const encodedManifest = JSON.stringify(manifestWithAbsoluteUrls).replace(/#/g, '
 
         // --- LÓGICA DEL SERVICE WORKER Y OTROS ---
         window.addEventListener('load', () => {
-            // 1. Registro del Service Worker
+            // 1. Solicitud de Permiso de Notificaciones
+            if ('Notification' in window) {
+              Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                  console.log('[Layout] Permiso para notificaciones concedido.');
+                } else {
+                  console.warn('[Layout] Permiso para notificaciones denegado.');
+                }
+              });
+            }
+
+            // 2. Registro del Service Worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js')
                     .then(reg => console.log('[Layout] Service Worker registrado.', reg))
                     .catch(err => console.error('[Layout] Error al registrar Service Worker:', err));
             }
 
-            // 2. Disparador de Sincronización en Carga de Página
+            // 3. Disparador de Sincronización en Carga de Página
             if ('serviceWorker' in navigator && 'SyncManager' in window) {
                 navigator.serviceWorker.ready.then(sw => {
                     sw.sync.register('sync-pending-meals')
