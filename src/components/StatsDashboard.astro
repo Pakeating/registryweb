@@ -556,20 +556,24 @@ import StatsSummary from "./StatsSummary.astro";
     function getDateRange() {
         const selected = dateRangeSelector.value;
         const now = new Date();
-        let startDate = new Date();
+        let startDate;
 
         switch (selected) {
             case "today":
+                startDate = new Date();
                 startDate.setHours(0, 0, 0, 0);
                 break;
             case "week":
+                startDate = new Date();
                 const day = now.getDay();
                 const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-                startDate = new Date(now.setDate(diff));
+                startDate = new Date(now.getFullYear(), now.getMonth(), diff);
                 startDate.setHours(0, 0, 0, 0);
                 break;
             case "month":
-                startDate.setMonth(now.getMonth() - 1);
+                startDate = new Date();
+                startDate.setDate(1);
+                startDate.setHours(0, 0, 0, 0);
                 break;
             case "all":
                 startDate = new Date(0);
