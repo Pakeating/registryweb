@@ -15,7 +15,8 @@ export function createQueryBody() {
       query: "",
       filter: {
 
-      }
+      },
+      start_cursor: undefined
     }
   };
 };

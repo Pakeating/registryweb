@@ -33,7 +33,12 @@ import StatsSummary from "./StatsSummary.astro";
         </div>
 
         <div id="loading" class="loading-indicator" style="display: none;">
-            Cargando...
+            <div>Cargando...</div>
+            <div
+                id="loadingProgress"
+                style="font-size: 0.9rem; color: #57534e; margin-top: 0.5rem;"
+            >
+            </div>
         </div>
 
         <StatsSummary />
@@ -241,6 +246,7 @@ import StatsSummary from "./StatsSummary.astro";
     const viewSelector = document.getElementById("viewSelector");
     const fetchDataButton = document.getElementById("fetchData");
     const loadingIndicator = document.getElementById("loading");
+    const loadingProgress = document.getElementById("loadingProgress");
     const chartsView = document.getElementById("chartsView");
     const tableView = document.getElementById("tableView");
     const historyContainer = document.getElementById("historyChartContainer");
@@ -381,29 +387,62 @@ import StatsSummary from "./StatsSummary.astro";
             };
         });
     }
+    /**
+     * Recupera los datos de Notion.
+     * IMPORTANTE: Implementa lógica de paginación para recuperar TODOS los registros.
+     * La API de Notion devuelve los resultados paginados (por defecto 100 items).
+     * Se utiliza un bucle while para solicitar páginas adicionales mientras 'has_more' sea true.
+     */
     async function fetchData(startDate) {
         toggleLoading(true);
+        let allResults = [];
+        let hasMore = true;
+        let nextCursor = undefined;
+        let pagesFetched = 0;
+
         try {
             const { apiKey, dbName } = await getNotionCredentials();
-            const query = createQueryBody();
-            query.parameters.apiKey = apiKey;
-            query.parameters.dbId = await checkNotionDB(dbName, apiKey);
-            query.parameters.searchType = "CONTENT";
-            query.body.filter = {
-                property: "Fecha de Consumo",
-                date: { on_or_after: startDate },
-            };
-            const response = await fetch("/api/proxy", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(query),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Fallo en el backend.");
+            const dbId = await checkNotionDB(dbName, apiKey);
+
+            while (hasMore) {
+                const query = createQueryBody();
+                query.parameters.apiKey = apiKey;
+                query.parameters.dbId = dbId;
+                query.parameters.searchType = "CONTENT";
+                query.body.filter = {
+                    property: "Fecha de Consumo",
+                    date: { on_or_after: startDate },
+                };
+
+                if (nextCursor) {
+                    query.body.start_cursor = nextCursor;
+                }
+
+                const response = await fetch("/api/proxy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(query),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(
+                        errorData.message || "Fallo en el backend.",
+                    );
+                }
+
+                const data = await response.json();
+                allResults = [...allResults, ...(data.results || [])];
+                hasMore = data.has_more;
+                nextCursor = data.next_cursor;
+
+                pagesFetched++;
+                if (loadingProgress) {
+                    loadingProgress.textContent = `${pagesFetched} páginas recuperadas`;
+                }
             }
-            const data = await response.json();
-            return data.results || [];
+
+            return allResults;
         } catch (error) {
             throw error;
         } finally {
@@ -588,6 +627,9 @@ import StatsSummary from "./StatsSummary.astro";
         if (fetchDataButton) fetchDataButton.disabled = isLoading;
         if (loadingIndicator)
             loadingIndicator.style.display = isLoading ? "block" : "none";
+        if (!isLoading && loadingProgress) {
+            loadingProgress.textContent = "";
+        }
     }
     const chartOptions = (isDoughnut = false) => ({
         responsive: true,
