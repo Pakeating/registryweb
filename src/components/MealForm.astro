@@ -37,14 +37,33 @@ import LoadingButton from "./LoadingButton.astro";
         </select>
       </div>
     </div>
+    
+    <div class="optional-section-toggle">
+      <div id="toggle-optional-fields" class="icon-container">
+        <svg id="toggle-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+      </div>
+    </div>
 
-    <div class="form-group">
-      <label for="description" class="label">Observaciones</label>
-      <textarea
-        id="description"
-        name="description"
-        class="textarea"
-        placeholder="Ej: Me sentía un poco bajo de energía..."></textarea>
+    <div id="optional-fields-section" class="hidden">
+      <div class="form-group">
+        <label for="calorie-count" class="label">Calorías</label>
+        <input
+          type="number"
+          id="calorie-count"
+          name="calorie-count"
+          class="input"
+        />
+      </div>
+      <div class="form-group">
+        <label for="description" class="label">Observaciones</label>
+        <textarea
+          id="description"
+          name="description"
+          class="textarea"
+          placeholder="Ej: Me sentía un poco bajo de energía..."></textarea>
+      </div>
     </div>
 
     <div class="form-group">
@@ -54,6 +73,34 @@ import LoadingButton from "./LoadingButton.astro";
 </div>
 
 <style>
+  .hidden {
+    display: none;
+  }
+  .optional-section-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem; /* Space before the button appears */
+  }
+  .icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem; 
+    height: 2.5rem;
+    border: 1px solid #d4d4d8;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .icon-container:hover {
+    background-color: #f5f5f4; /* A light hover effect */
+    border-color: #a3a3a3;
+  }
+  .icon-container svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: #57534e;
+  }
   .meal-form {
     max-width: 500px;
     margin: 2rem auto;
@@ -120,6 +167,20 @@ import LoadingButton from "./LoadingButton.astro";
 
   const form = document.getElementById("meal-form-element");
   const submitButton = document.getElementById("submit-button");
+  const toggleButton = document.getElementById('toggle-optional-fields');
+  const optionalSection = document.getElementById('optional-fields-section');
+  const toggleIcon = document.getElementById('toggle-icon');
+  let isOptionalSectionVisible = false;
+
+  toggleButton.addEventListener('click', () => {
+    isOptionalSectionVisible = !isOptionalSectionVisible;
+    optionalSection.classList.toggle('hidden');
+    if (isOptionalSectionVisible) {
+      toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6"></path>`;
+    } else {
+      toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>`;
+    }
+  });
 
   // --- Funciones de ayuda para el UI (sin cambios) ---
   function setLoading(isLoading) {
@@ -141,10 +202,17 @@ import LoadingButton from "./LoadingButton.astro";
     const dateTimeInput = document.getElementById("meal-time") as HTMLInputElement;
     const mealTypeSelect = document.getElementById("meal-type") as HTMLSelectElement;
     const descriptionInput = document.getElementById("description") as HTMLInputElement;
+    const calorieCountInput = document.getElementById("calorie-count") as HTMLInputElement;
 
-    if (mealNameInput && dateTimeInput && mealTypeSelect) {
+    if (mealNameInput && dateTimeInput && mealTypeSelect && calorieCountInput) {
       mealNameInput.value = "";
       descriptionInput.value = "";
+      calorieCountInput.value = "";
+      if(isOptionalSectionVisible) {
+        optionalSection.classList.add('hidden');
+        isOptionalSectionVisible = false;
+        toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>`;
+      }
       const now = new Date();
       const timezoneOffset = now.getTimezoneOffset() * 60000;
       const localISOTime = new Date(now - timezoneOffset).toISOString().slice(0, 16);
@@ -222,10 +290,13 @@ import LoadingButton from "./LoadingButton.astro";
       commandRequest.parameters.dbId = dbId;
       
       const mealTimeValue = (document.getElementById("meal-time") as HTMLInputElement).value;
+      const calorieCountValue = (document.getElementById("calorie-count") as HTMLInputElement).value;
+
 
       commandRequest.body.mealName = (document.getElementById("meal-name") as HTMLInputElement).value;
       commandRequest.body.mealTime = new Date(mealTimeValue).toISOString(); // <-- CORRECCIÓN APLICADA
       commandRequest.body.mealType = mealType;
+      commandRequest.body.calorieCount = calorieCountValue ? parseInt(calorieCountValue, 10) : null;
       commandRequest.body.mealDescription = (document.getElementById("description") as HTMLInputElement).value;
       commandRequest.body.mealAudit = new Date().toISOString();
 

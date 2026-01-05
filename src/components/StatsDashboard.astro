@@ -5,7 +5,7 @@ import StatsSummary from "./StatsSummary.astro";
 
 <div class="stats-dashboard">
     <div class="card">
-        <h2 class="title">Análisis de Picoteos</h2>
+        <h2 class="title">Análisis</h2>
 
         <div class="controls-container">
             <div class="control-group">
@@ -67,6 +67,7 @@ import StatsSummary from "./StatsSummary.astro";
                             <th>Nombre</th>
                             <th>Fecha de Consumo</th>
                             <th>Categoría</th>
+                            <th>Calorías</th>
                             <th>Observaciones</th>
                         </tr>
                     </thead>
@@ -304,7 +305,7 @@ import StatsSummary from "./StatsSummary.astro";
                 if (typeChartInstance) typeChartInstance.destroy();
                 if (dataTableBody)
                     dataTableBody.innerHTML =
-                        '<tr><td colspan="4">No hay datos.</td></tr>';
+                        '<tr><td colspan="5">No hay datos.</td></tr>';
                 const statsSummaryContainer =
                     document.getElementById("statsSummary");
                 if (statsSummaryContainer)
@@ -322,12 +323,15 @@ import StatsSummary from "./StatsSummary.astro";
         if (!statsSummaryContainer) return;
 
         const snacks = data.filter((d) => d.category.includes("Picoteo"));
-        if (snacks.length === 0) {
+        if (data.length === 0) { // Check all data, not just snacks
             statsSummaryContainer.classList.add("hidden");
             return;
         }
 
-        // --- CÁLCULO MEDIA GENERAL (CORREGIDO) ---
+        // --- CÁLCULO MEDIA GENERAL ---
+        const uniqueDays = new Set(data.map((d) => d.consumptionDate.slice(0, 10)));
+        const numberOfDays = uniqueDays.size > 0 ? uniqueDays.size : 1;
+
         const uniqueSnackDays = new Set(
             snacks.map((s) => s.consumptionDate.slice(0, 10)),
         );
@@ -362,11 +366,17 @@ import StatsSummary from "./StatsSummary.astro";
             );
             peakHoursFormatted = `${peakHour}h-${parseInt(peakHour) + 1}h`;
         }
+        
+        // --- CÁLCULO MEDIA CALORÍAS ---
+        const totalCalories = data.reduce((sum, item) => sum + (item.calories || 0), 0);
+        const avgCalories = (totalCalories / numberOfDays).toFixed(0);
+
 
         // --- ACTUALIZAR DOM ---
         document.getElementById("avgSnacks").textContent = avgSnacks || "--";
         document.getElementById("snackRatio").textContent = snackRatio;
         document.getElementById("peakHours").textContent = peakHoursFormatted;
+        document.getElementById("avgCalories").textContent = avgCalories || "0";
         statsSummaryContainer.classList.remove("hidden");
     }
 
@@ -383,6 +393,7 @@ import StatsSummary from "./StatsSummary.astro";
                 consumptionDate:
                     props["Fecha de Consumo"]?.date?.start ?? page.created_time,
                 category: props["Categoria de Comida"]?.select?.name ?? "",
+                calories: props["Calorias"]?.number ?? null,
                 notes: props["Observaciones"]?.rich_text[0]?.plain_text ?? "",
             };
         });
@@ -486,7 +497,7 @@ import StatsSummary from "./StatsSummary.astro";
                     minute: "2-digit",
                 },
             );
-            row.innerHTML = `<td>${item.name}</td><td>${date}</td><td>${item.category}</td><td>${item.notes}</td>`;
+            row.innerHTML = `<td>${item.name}</td><td>${date}</td><td>${item.category}</td><td>${item.calories || '--'}</td><td>${item.notes}</td>`;
             dataTableBody.appendChild(row);
         });
     }

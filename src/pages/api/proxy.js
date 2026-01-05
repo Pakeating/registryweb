@@ -78,6 +78,7 @@ async function notionCommandProxy(command) {
             'Fecha de Consumo': { date: { start: mealData.mealTime } },
             'Categoria de Comida': { select: { name: mealData.mealType } },
             'Fecha de Registro': { date: { start: mealData.mealAudit } },
+            'Calorias' : { number: mealData.calorieCount },
             'Observaciones': { rich_text: [{ text: { content: mealData.mealDescription } }] }
         }
       })

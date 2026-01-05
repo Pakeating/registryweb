@@ -1,0 +1,19 @@
+{
+    "query": "",
+    "filter": {
+        "and": [
+            {
+                "property": "Fecha de Consumo",
+                "date": {
+                    "on_or_after": "2025-09-11T08:50:28.224Z"
+                }
+            },
+            {
+                "property": "Fecha de Consumo",
+                "date": {
+                    "on_or_before": "2025-09-18T08:50:28.224Z"
+                }
+            }
+        ]
+    }
+}
