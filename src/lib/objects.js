@@ -55,6 +55,7 @@ export function createCommandBody() {
       mealName: "",
       mealTime: "",
       mealType: "",
+      calorieCount: null,
       mealDescription: "",
       mealAudit: ""
     }
