@@ -12,9 +12,9 @@ import StatsSummary from "./StatsSummary.astro";
                 <label for="dateRangeSelector">Rango de Fechas</label>
                 <select id="dateRangeSelector" class="select">
                     <option value="all">Desde el inicio</option>
-                    <option value="week" selected>Esta semana</option>
+                    <option value="week">Esta semana</option>
                     <option value="month">Último mes</option>
-                    <option value="today">Hoy</option>
+                    <option value="today" selected>Hoy</option>
                 </select>
             </div>
             <div class="control-group">
@@ -24,9 +24,6 @@ import StatsSummary from "./StatsSummary.astro";
                     <option value="table">Tabla de Datos</option>
                     <option value="history">Solo Histórico</option>
                     <option value="type">Solo Tipos</option>
-                    <option value="heatmap" disabled
-                        >Mapa de Calor (Próximamente)</option
-                    >
                 </select>
             </div>
             <button id="fetchData" class="btn">Generar Vista</button>
